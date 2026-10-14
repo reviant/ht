@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PulseHabit">
+    <meta name="application-name" content="PulseHabit">
+    <meta name="theme-color" content="#0B0F17" id="themeColorMeta">
+    <title>PulseHabit | Standalone Habit & Streak PWA</title>
+
+    <!-- Dynamic App Icons & Manifest will be injected here on startup -->
+    <link id="dynamicFavicon" rel="icon" type="image/png">
+    <link id="dynamicAppleIcon" rel="apple-touch-icon">
+    <link id="dynamicManifest" rel="manifest">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(env(safe-area-inset-bottom) + 4.5rem);
+        }
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        .safe-bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .check-pop {
+            animation: pop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes pop {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .shake-lock {
+            animation: shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(3px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .bar-grow {
+            transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease;
+        }
+        .ring-progress {
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300 flex flex-col">
+
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200/80 dark:border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 shrink-0">
+                    <i class="ph-bold ph-lightning text-xl"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <h1 class="font-extrabold text-base sm:text-lg tracking-tight truncate">PulseHabit</h1>
+                        <span id="pwaModeBadge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">PWA Ready</span>
+                    </div>
+                    <p id="currentDateDisplay" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Loading calendar...</p>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <!-- Install / Mobile App Guide Button -->
+                <button onclick="openPwaModal()" id="topInstallBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 transition" title="Install on Android or iPhone">
+                    <i class="ph-bold ph-device-mobile-speaker text-base"></i>
+                    <span id="topInstallBtnText" class="hidden sm:inline">Mobile App</span>
+                </button>
+
+                <!-- Backup / Export / Import Modal Trigger -->
+                <button onclick="openDataModal()" class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" title="Export JSON/CSV or Import Backup">
+                    <i class="ph-bold ph-database text-base text-indigo-500"></i>
+                    <span>Backup & CSV</span>
+                </button>
+
+                <!-- Sound Toggle -->
+                <button id="soundToggleBtn" onclick="toggleSound()" title="Toggle sound effects" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition">
+                    <i id="soundIcon" class="ph-bold ph-speaker-high text-lg"></i>
+                </button>
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" title="Switch Light/Dark Theme" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition">
+                    <i id="themeIcon" class="ph-bold ph-sun text-lg"></i>
+                </button>
+
+                <!-- Add New Habit -->
+                <button onclick="openHabitModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold text-xs sm:text-sm px-3.5 sm:px-4 py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition">
+                    <i class="ph-bold ph-plus text-base"></i>
+                    <span class="hidden xs:inline">New Habit</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
+
+        <!-- Calendar Engine Bar & 15-Day Edit Policy Banner -->
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3.5">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <!-- Left: Week Range & Status Pill -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button onclick="shiftWeek(-1)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 transition flex items-center gap-1" title="Previous Week">
+                            <i class="ph-bold ph-caret-left"></i>
+                            <span class="hidden sm:inline">Prev Week</span>
+                        </button>
+                        <button onclick="jumpToToday()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 transition">
+                            Today
+                        </button>
+                        <button onclick="shiftWeek(1)" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-white dark:hover:bg-slate-700 transition flex items-center gap-1" title="Next Week">
+                            <span class="hidden sm:inline">Next Week</span>
+                            <i class="ph-bold ph-caret-right"></i>
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 id="weekRangeLabel" class="font-bold text-sm sm:text-base">Oct 12 – Oct 18, 2026</h2>
+                            <span id="selectedDateStatusPill" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span class="inline-flex items-center gap-1 text-emerald-500 font-semibold"><i class="ph-fill ph-lock-key-open"></i>15-Day Editable Window</span>
+                            <span class="mx-1">•</span>
+                            <span class="inline-flex items-center gap-1 text-cyan-500 font-semibold"><i class="ph-bold ph-snowflake"></i>Older than 15 days = Frozen</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right: Specific Calendar Date Picker -->
+                <div class="flex items-center gap-2 self-start lg:self-auto">
+                    <label for="calendarDateInput" class="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 shrink-0">
+                        <i class="ph-duotone ph-calendar text-indigo-500 text-base"></i>
+                        <span>Inspect Date:</span>
+                    </label>
+                    <input
+                        id="calendarDateInput"
+                        type="date"
+                        onchange="handleDatePickerChange(this.value)"
+                        class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    />
+                </div>
+            </div>
+
+            <!-- 21-Day Interactive History Strip (Shows Frozen vs Editable Window) -->
+            <div class="pt-1">
+                <div class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 mb-1.5 px-1">
+                    <span class="flex items-center gap-1"><i class="ph-bold ph-snowflake text-cyan-400"></i> Frozen Archive (&gt;15d ago)</span>
+                    <span class="flex items-center gap-1 text-emerald-500 font-medium"><i class="ph-bold ph-pencil-simple"></i> Editable Last 15 Days (Tap any date)</span>
+                </div>
+                <div id="historyStripContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5 select-none">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Summary Cards -->
+        <section id="kpiSection" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Weekly Completion Rate -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between">
+                <div>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Viewed Week</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <h2 id="kpiWeeklyRate" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0%</h2>
+                        <span id="kpiWeeklyDelta" class="text-[11px] font-semibold text-emerald-500">0/0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Weekly check-ins</p>
+                </div>
+                <div class="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center shrink-0">
+                    <svg class="w-full h-full -rotate-90" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" stroke="currentColor" stroke-width="6" fill="transparent" class="text-slate-100 dark:text-slate-800" />
+                        <circle id="kpiScoreRing" cx="30" cy="30" r="24" stroke="currentColor" stroke-width="6" fill="transparent"
+                            stroke-dasharray="150.79" stroke-dashoffset="150.79" stroke-linecap="round"
+                            class="text-indigo-500 ring-progress" />
+                    </svg>
+                    <i class="ph-bold ph-chart-line-up text-indigo-500 text-base sm:text-lg absolute"></i>
+                </div>
+            </div>
+
+            <!-- Active Top Streak -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between">
+                <div class="min-w-0">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Active Streak</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <h2 id="kpiCurrentStreak" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0d</h2>
+                    </div>
+                    <p id="kpiCurrentStreakHabit" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">Keep logging daily</p>
+                </div>
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                    <i class="ph-fill ph-fire text-xl sm:text-2xl"></i>
+                </div>
+            </div>
+
+            <!-- All-Time Best Streak -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between">
+                <div class="min-w-0">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">All-Time Best</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <h2 id="kpiBestStreak" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0d</h2>
+                    </div>
+                    <p id="kpiBestStreakHabit" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">Personal record</p>
+                </div>
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500 shrink-0">
+                    <i class="ph-fill ph-trophy text-xl sm:text-2xl"></i>
+                </div>
+            </div>
+
+            <!-- Selected Date Progress -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm flex items-center justify-between">
+                <div class="min-w-0">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Selected Date</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <h2 id="kpiTodayCount" class="text-2xl sm:text-3xl font-extrabold tracking-tight">0/0</h2>
+                        <span id="kpiSelectedDayName" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 truncate">Today</span>
+                    </div>
+                    <p id="kpiSelectedDateSub" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">Tap day to inspect</p>
+                </div>
+                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                    <i class="ph-fill ph-calendar-check text-xl sm:text-2xl"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <section id="matrixSection" class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+                <!-- Category Filter & Quick Batch Controls -->
+                <div class="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="categoryFilterTabs">
+                        <button onclick="setCategoryFilter('all')" data-cat="all" class="cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white shrink-0">All Habits</button>
+                        <button onclick="setCategoryFilter('Health')" data-cat="Health" class="cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">Health</button>
+                        <button onclick="setCategoryFilter('Mind')" data-cat="Mind" class="cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">Mind</button>
+                        <button onclick="setCategoryFilter('Work')" data-cat="Work" class="cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">Work</button>
+                        <button onclick="setCategoryFilter('Fitness')" data-cat="Fitness" class="cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0">Fitness</button>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="batchCompleteBtn" onclick="batchSetSelectedDate(true)" class="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition flex items-center gap-1.5">
+                            <i class="ph-bold ph-checks"></i>
+                            <span id="markAllBtnLabel">Mark All Done</span>
+                        </button>
+                        <button id="batchClearBtn" onclick="batchSetSelectedDate(false)" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/10 hover:text-rose-500 text-slate-600 dark:text-slate-300 transition flex items-center gap-1">
+                            <i class="ph-bold ph-eraser"></i>
+                            <span>Clear Day</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Matrix Table Wrapper -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr id="dayHeaderRow" class="border-b border-slate-200/70 dark:border-slate-800/80 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-slate-50/50 dark:bg-slate-900/40">
+                                <!-- Populated dynamically -->
+                            </tr>
+                        </thead>
+                        <tbody id="habitTableBody" class="divide-y divide-slate-200/60 dark:divide-slate-800/70 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyHabitState" class="hidden py-14 px-4 text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 mx-auto flex items-center justify-center text-slate-400 mb-3">
+                        <i class="ph-duotone ph-target text-3xl"></i>
+                    </div>
+                    <h3 class="font-bold text-base">No habits in this category</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1">Create a custom daily habit or switch category tabs to view your weekly rituals.</p>
+                    <button onclick="openHabitModal()" class="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-500 transition">
+                        <i class="ph-bold ph-plus"></i> Add Custom Habit
+                    </button>
+                </div>
+            </section>
+
+            <aside id="sidePanelSection" class="lg:col-span-4 space-y-6">
+
+                <!-- Specific Calendar Date Inspector Card -->
+                <div id="inspectorSection" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <div id="inspectorBadge" class="w-11 h-11 rounded-xl bg-indigo-500/10 text-indigo-500 flex flex-col items-center justify-center font-extrabold text-xs shrink-0 border border-indigo-500/20">
+                                <span id="inspectorBadgeDay">WED</span>
+                                <span id="inspectorBadgeNum" class="text-sm leading-none">14</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <h3 id="inspectorTitle" class="font-bold text-sm sm:text-base">Oct 14, 2026</h3>
+                                    <span id="inspectorLockBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
+                                </div>
+                                <p id="inspectorSubtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">0 of 0 habits completed</p>
+                            </div>
+                        </div>
+                        <span id="inspectorPercent" class="text-lg font-extrabold text-indigo-500">0%</span>
+                    </div>
+
+                    <!-- Filter Tabs Inside Inspector (All / Done / Missed) -->
+                    <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-[11px] font-semibold">
+                            <button onclick="setInspectorFilter('all')" id="inspTab-all" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm transition">All</button>
+                            <button onclick="setInspectorFilter('done')" id="inspTab-done" class="px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 transition">Done</button>
+                            <button onclick="setInspectorFilter('missed')" id="inspTab-missed" class="px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 transition">Pending</button>
+                        </div>
+                        <span id="inspectorPolicyHint" class="text-[11px] text-slate-400 dark:text-slate-500">Tap item to toggle</span>
+                    </div>
+
+                    <!-- Direct Habit Checklist for the Selected Calendar Date -->
+                    <div id="inspectorHabitsList" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Interactive Weekly Bar & Trend Chart -->
+                <div id="chartsSection" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-base flex items-center gap-2">
+                                <i class="ph-duotone ph-chart-bar text-indigo-500 text-lg"></i>
+                                Weekly Streak Chart
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Tap any bar or point to inspect that date</p>
+                        </div>
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg text-xs">
+                            <button id="chartModeBar" onclick="setChartMode('bar')" class="px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-900 shadow-sm text-indigo-600 dark:text-indigo-400 transition">Bars</button>
+                            <button id="chartModeArea" onclick="setChartMode('area')" class="px-2.5 py-1 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition">Curve</button>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart View -->
+                    <div id="barChartContainer" class="pt-4">
+                        <div id="weeklyBarChart" class="h-48 flex items-end justify-between gap-2 pt-6 pb-2 px-1 border-b border-slate-200/80 dark:border-slate-800 relative">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Smooth SVG Curve Chart View -->
+                    <div id="areaChartContainer" class="hidden pt-2">
+                        <div class="h-48 w-full relative">
+                            <svg id="weeklyAreaSvg" class="w-full h-full overflow-visible" viewBox="0 0 320 175"></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Habit Streak Leaderboard -->
+                <div id="leaderboardSection" class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-bold text-base flex items-center gap-2">
+                                <i class="ph-duotone ph-flame text-amber-500 text-lg"></i>
+                                Streak Leaderboard
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Tap any habit card to customize</p>
+                        </div>
+                        <span class="text-[11px] font-semibold text-slate-400">Active vs Best</span>
+                    </div>
+
+                    <div id="streakLeaderboard" class="space-y-2.5">
+                        <!-- Dynamically rendered -->
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+    </main>
+
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/80 dark:border-slate-800/80 safe-bottom-nav">
+        <div class="grid grid-cols-5 h-16 px-1">
+            <button onclick="switchMobileTab('track')" id="mnav-track" class="flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold">
+                <i class="ph-fill ph-check-square-offset text-xl"></i>
+                <span class="text-[10px]">Track</span>
+            </button>
+            <button onclick="switchMobileTab('inspector')" id="mnav-inspector" class="flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium">
+                <i class="ph-bold ph-calendar-check text-xl"></i>
+                <span class="text-[10px]">Day Check</span>
+            </button>
+            <button onclick="switchMobileTab('charts')" id="mnav-charts" class="flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium">
+                <i class="ph-bold ph-chart-bar text-xl"></i>
+                <span class="text-[10px]">Streaks</span>
+            </button>
+            <button onclick="openDataModal()" id="mnav-backup" class="flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium">
+                <i class="ph-bold ph-database text-xl"></i>
+                <span class="text-[10px]">Backup</span>
+            </button>
+            <button onclick="openPwaModal()" id="mnav-pwa" class="flex flex-col items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <i class="ph-bold ph-device-mobile-speaker text-xl"></i>
+                <span class="text-[10px]">App Setup</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="habitModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                        <i id="habitModalHeaderIcon" class="ph-bold ph-sparkle text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 id="habitModalTitle" class="font-bold text-base">Create Custom Habit</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">100% customizable goal, icon & streaks</p>
+                    </div>
+                </div>
+                <button onclick="closeHabitModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <form id="habitForm" onsubmit="handleSaveHabit(event)" class="space-y-4">
+                <input type="hidden" id="editingHabitId" value="">
+
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Emoji</label>
+                        <input id="habitEmojiInput" type="text" maxlength="4" value="💧"
+                            class="w-full px-2 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Habit Title</label>
+                        <input id="habitNameInput" type="text" required maxlength="45" placeholder="e.g., Hydrate 2.5L Water"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Quick Emoji Picker Row -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    <span class="text-[10px] font-semibold text-slate-400 shrink-0 mr-1">Pick:</span>
+                    <button type="button" onclick="setEmoji('💧')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">💧</button>
+                    <button type="button" onclick="setEmoji('🧠')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">🧠</button>
+                    <button type="button" onclick="setEmoji('🏃')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">🏃</button>
+                    <button type="button" onclick="setEmoji('📖')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">📖</button>
+                    <button type="button" onclick="setEmoji('🌙')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">🌙</button>
+                    <button type="button" onclick="setEmoji('🥗')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">🥗</button>
+                    <button type="button" onclick="setEmoji('🧘')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">🧘</button>
+                    <button type="button" onclick="setEmoji('💻')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-indigo-500/20 text-sm">💻</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Category</label>
+                        <select id="habitCategoryInput" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Health">Health</option>
+                            <option value="Mind">Mind</option>
+                            <option value="Work">Work</option>
+                            <option value="Fitness">Fitness</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Weekly Target</label>
+                        <select id="habitGoalInput" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="7">7 days / week</option>
+                            <option value="6">6 days / week</option>
+                            <option value="5" selected>5 days / week</option>
+                            <option value="4">4 days / week</option>
+                            <option value="3">3 days / week</option>
+                            <option value="2">2 days / week</option>
+                            <option value="1">1 day / week</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Carry-over & Personal Record Customization -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Prior Streak Carry</label>
+                        <input id="habitPriorStreakInput" type="number" min="0" max="9999" value="0"
+                            class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">All-Time Best Record</label>
+                        <input id="habitRecordStreakInput" type="number" min="0" max="9999" value="0"
+                            class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Accent Color</label>
+                    <div id="colorPickerRow" class="flex items-center gap-2.5">
+                        <button type="button" onclick="selectHabitColor('indigo')" data-color="indigo" class="color-swatch w-8 h-8 rounded-full bg-indigo-500 ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 transition"></button>
+                        <button type="button" onclick="selectHabitColor('emerald')" data-color="emerald" class="color-swatch w-8 h-8 rounded-full bg-emerald-500 opacity-60 hover:opacity-100 transition"></button>
+                        <button type="button" onclick="selectHabitColor('amber')" data-color="amber" class="color-swatch w-8 h-8 rounded-full bg-amber-500 opacity-60 hover:opacity-100 transition"></button>
+                        <button type="button" onclick="selectHabitColor('rose')" data-color="rose" class="color-swatch w-8 h-8 rounded-full bg-rose-500 opacity-60 hover:opacity-100 transition"></button>
+                        <button type="button" onclick="selectHabitColor('cyan')" data-color="cyan" class="color-swatch w-8 h-8 rounded-full bg-cyan-500 opacity-60 hover:opacity-100 transition"></button>
+                        <button type="button" onclick="selectHabitColor('purple')" data-color="purple" class="color-swatch w-8 h-8 rounded-full bg-purple-500 opacity-60 hover:opacity-100 transition"></button>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between gap-2">
+                    <button type="button" id="modalDeleteHabitBtn" onclick="deleteHabitFromModal()" class="hidden px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 transition">
+                        <i class="ph-bold ph-trash mr-1"></i>Delete
+                    </button>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <button type="button" onclick="closeHabitModal()" class="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                            Cancel
+                        </button>
+                        <button type="submit" id="habitModalSubmitBtn" class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20">
+                            Save Habit
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dataModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-5 my-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                        <i class="ph-bold ph-database text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">Export & Import Data Backup</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Sync across Android, iPhone, or Excel</p>
+                    </div>
+                </div>
+                <button onclick="closeDataModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Export Section -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">1. Export Your Habit Data</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button onclick="exportJsonBackup()" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition">
+                        <i class="ph-bold ph-download-simple text-base"></i>
+                        <span>Export JSON Backup</span>
+                    </button>
+                    <button onclick="exportCsvSpreadsheet()" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm transition">
+                        <i class="ph-bold ph-file-csv text-base"></i>
+                        <span>Export Excel CSV</span>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">JSON preserves all habits, icons, streaks, and frozen calendar dates. CSV opens cleanly in Excel or Google Sheets.</p>
+            </div>
+
+            <!-- Import Section -->
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">2. Restore from JSON Backup</h4>
+                <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 rounded-xl p-4 cursor-pointer transition text-center">
+                    <i class="ph-duotone ph-upload-simple text-2xl text-indigo-500 mb-1"></i>
+                    <span class="text-xs font-semibold">Tap to select a <code class="text-indigo-500">.json</code> backup file</span>
+                    <span class="text-[11px] text-slate-400 mt-0.5">Works on Android, iOS Files, and Desktop</span>
+                    <input type="file" accept=".json,application/json" onchange="handleImportFile(event)" class="hidden" />
+                </label>
+
+                <div class="space-y-2 pt-1">
+                    <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400">Or paste raw JSON backup below:</label>
+                    <textarea id="rawJsonPasteInput" rows="3" placeholder='{"habits": [...]}' class="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    <button onclick="handleImportRawJson()" class="w-full py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-indigo-600 text-white text-xs font-semibold transition">
+                        Import Pasted JSON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pwaModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-5 my-auto">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img id="pwaModalAppIcon" alt="PulseHabit Icon" class="w-12 h-12 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700" />
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-base">Use as Standalone Mobile App</h3>
+                            <span id="pwaModalStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">Ready</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Full-screen Android & iPhone Home Screen App</p>
+                    </div>
+                </div>
+                <button onclick="closePwaModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Native Android One-Tap Install Banner (Shown when beforeinstallprompt is available) -->
+            <div id="nativeInstallBanner" class="hidden p-4 rounded-xl bg-indigo-600 text-white flex items-center justify-between gap-3">
+                <div>
+                    <h4 class="font-bold text-sm">One-Tap Install Available!</h4>
+                    <p class="text-xs text-indigo-100">Install PulseHabit directly to your device launcher.</p>
+                </div>
+                <button onclick="triggerNativePwaInstall()" class="px-4 py-2 rounded-xl bg-white text-indigo-600 font-bold text-xs shrink-0 shadow">
+                    Install Now
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <!-- iPhone / iPad Safari Guide -->
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-2.5">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-fill ph-apple-logo text-xl text-slate-800 dark:text-white"></i>
+                        <h4 class="font-bold text-xs uppercase tracking-wider">iPhone & iPad (Safari)</h4>
+                    </div>
+                    <ol class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-decimal list-inside">
+                        <li>Open this page in <strong>Safari</strong>.</li>
+                        <li>Tap the <strong>Share</strong> button <i class="ph-bold ph-export text-indigo-500"></i> at the bottom bar.</li>
+                        <li>Scroll down and tap <strong>"Add to Home Screen"</strong> <i class="ph-bold ph-plus-square text-indigo-500"></i>.</li>
+                        <li>Launch from your Home Screen for full-screen standalone mode!</li>
+                    </ol>
+                </div>
+
+                <!-- Android Chrome Guide -->
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-2.5">
+                    <div class="flex items-center gap-2">
+                        <i class="ph-fill ph-android-logo text-xl text-emerald-500"></i>
+                        <h4 class="font-bold text-xs uppercase tracking-wider">Android (Chrome)</h4>
+                    </div>
+                    <ol class="text-xs text-slate-600 dark:text-slate-300 space-y-2 list-decimal list-inside">
+                        <li>Open this page in <strong>Google Chrome</strong>.</li>
+                        <li>Tap the <strong>Three Dots Menu (⋮)</strong> in the top-right corner.</li>
+                        <li>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong>.</li>
+                        <li>Open PulseHabit anytime from your app drawer offline-ready!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2.5">
+                <i class="ph-fill ph-shield-check text-lg shrink-0 mt-0.5"></i>
+                <div>
+                    <strong>100% On-Device Privacy & Storage:</strong> All habits and 15-day logs stay saved in your phone's local storage. Use <strong>Backup & CSV</strong> anytime to transfer data between your phone and computer.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div class="w-11 h-11 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                <i class="ph-bold ph-warning text-2xl"></i>
+            </div>
+            <div>
+                <h3 id="confirmModalTitle" class="font-bold text-base">Confirm Action</h3>
+                <p id="confirmModalDesc" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Are you sure you want to proceed?</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Cancel</button>
+                <button id="confirmModalActionBtn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastBanner" class="fixed bottom-20 md:bottom-6 right-4 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-semibold max-w-xs sm:max-w-sm">
+        <i id="toastIcon" class="ph-fill ph-check-circle text-emerald-400 dark:text-emerald-600 text-lg shrink-0"></i>
+        <span id="toastMessage">Saved!</span>
+    </div>
+
+    <script>
+        const DAY_NAMES = [
+            { short: 'Mon', full: 'Monday' },
+            { short: 'Tue', full: 'Tuesday' },
+            { short: 'Wed', full: 'Wednesday' },
+            { short: 'Thu', full: 'Thursday' },
+            { short: 'Fri', full: 'Friday' },
+            { short: 'Sat', full: 'Saturday' },
+            { short: 'Sun', full: 'Sunday' }
+        ];
+
+        const COLOR_MAP = {
+            indigo: { bg: 'bg-indigo-500', lightBg: 'bg-indigo-500/10', text: 'text-indigo-500', hex: '#6366f1' },
+            emerald: { bg: 'bg-emerald-500', lightBg: 'bg-emerald-500/10', text: 'text-emerald-500', hex: '#10b981' },
+            amber: { bg: 'bg-amber-500', lightBg: 'bg-amber-500/10', text: 'text-amber-500', hex: '#f59e0b' },
+            rose: { bg: 'bg-rose-500', lightBg: 'bg-rose-500/10', text: 'text-rose-500', hex: '#f43f5e' },
+            cyan: { bg: 'bg-cyan-500', lightBg: 'bg-cyan-500/10', text: 'text-cyan-500', hex: '#06b6d4' },
+            purple: { bg: 'bg-purple-500', lightBg: 'bg-purple-500/10', text: 'text-purple-500', hex: '#a855f7' }
+        };
+
+        // Calendar Helper Functions (Local YYYY-MM-DD without UTC drift)
+        function toDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseDateKey(dateKey) {
+            const [y, m, d] = dateKey.split('-').map(Number);
+            return new Date(y, m - 1, d, 12, 0, 0);
+        }
+
+        function addDays(dateKey, offsetDays) {
+            const dt = parseDateKey(dateKey);
+            dt.setDate(dt.getDate() + offsetDays);
+            return toDateKey(dt);
+        }
+
+        function getMondayKey(dateKey) {
+            const dt = parseDateKey(dateKey);
+            const day = dt.getDay(); // 0=Sun .. 6=Sat
+            const diffToMon = day === 0 ? -6 : 1 - day;
+            dt.setDate(dt.getDate() + diffToMon);
+            return toDateKey(dt);
+        }
+
+        const TODAY_KEY = toDateKey(new Date());
+        // Strict 15-Day Editable Window: Today (offset 0) back to 14 days ago (total 15 calendar days)
+        const EDIT_WINDOW_DAYS = 15;
+        const OLDEST_EDITABLE_KEY = addDays(TODAY_KEY, -(EDIT_WINDOW_DAYS - 1));
+
+        /**
+         * Returns date editability status:
+         * - 'editable': within [OLDEST_EDITABLE_KEY, TODAY_KEY] (last 15 days inclusive)
+         * - 'frozen': older than 15 days (dateKey < OLDEST_EDITABLE_KEY)
+         * - 'future': after TODAY_KEY (dateKey > TODAY_KEY)
+         */
+        function getDatePolicy(dateKey) {
+            if (dateKey > TODAY_KEY) return 'future';
+            if (dateKey < OLDEST_EDITABLE_KEY) return 'frozen';
+            return 'editable';
+        }
+
+        function getDaysAgoDiff(dateKey) {
+            const t1 = parseDateKey(TODAY_KEY).getTime();
+            const t2 = parseDateKey(dateKey).getTime();
+            return Math.round((t1 - t2) / (1000 * 60 * 60 * 24));
+        }
+
+        // Seed realistic history across both the 15-day editable window AND frozen archive (>15d ago)
+        function createSeedHabits() {
+            const templates = [
+                { id: 'h-1', name: 'Hydrate 2.5L Water', emoji: '💧', category: 'Health', color: 'cyan', goal: 7, priorStreak: 6, recordStreak: 19, pattern: [1,1,1,1,0,1,1] },
+                { id: 'h-2', name: 'Deep Work (90m Flow)', emoji: '🧠', category: 'Work', color: 'indigo', goal: 5, priorStreak: 4, recordStreak: 14, pattern: [1,1,1,1,1,0,0] },
+                { id: 'h-3', name: 'Strength / Zone 2 Run', emoji: '🏃', category: 'Fitness', color: 'emerald', goal: 5, priorStreak: 3, recordStreak: 12, pattern: [1,0,1,1,1,1,0] },
+                { id: 'h-4', name: 'Mindful Reading (20m)', emoji: '📖', category: 'Mind', color: 'amber', goal: 6, priorStreak: 8, recordStreak: 21, pattern: [1,1,1,0,1,1,1] },
+                { id: 'h-5', name: 'Digital Sunset by 10 PM', emoji: '🌙', category: 'Health', color: 'purple', goal: 5, priorStreak: 2, recordStreak: 9, pattern: [0,1,1,1,1,0,1] }
+            ];
+
+            return templates.map((tpl, hIdx) => {
+                const logs = {};
+                // Populate last 24 days so user can immediately see Frozen (>15d ago) & Editable (last 15d) records
+                for (let back = 0; back <= 24; back++) {
+                    const dKey = addDays(TODAY_KEY, -back);
+                    const pVal = tpl.pattern[(back + hIdx) % tpl.pattern.length];
+                    if (back === 0) {
+                        logs[dKey] = hIdx < 3; // 3 completed today by default
+                    } else if (pVal === 1) {
+                        logs[dKey] = true;
+                    }
+                }
+                return {
+                    id: tpl.id,
+                    name: tpl.name,
+                    emoji: tpl.emoji,
+                    category: tpl.category,
+                    color: tpl.color,
+                    goal: tpl.goal,
+                    priorStreak: tpl.priorStreak,
+                    recordStreak: tpl.recordStreak,
+                    logs
+                };
+            });
+        }
+
+        let state = {
+            habits: [],
+            selectedDateKey: TODAY_KEY,
+            viewedMondayKey: getMondayKey(TODAY_KEY),
+            categoryFilter: 'all',
+            inspectorFilter: 'all',
+            chartMode: 'bar',
+            selectedNewColor: 'indigo',
+            soundEnabled: true,
+            mobileTab: 'track'
+        };
+
+        let deferredInstallPrompt = null;
+
+        function setupStandalonePWA() {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // Gradient background
+                const grad = ctx.createLinearGradient(0, 0, 512, 512);
+                grad.addColorStop(0, '#4f46e5');
+                grad.addColorStop(0.55, '#7c3aed');
+                grad.addColorStop(1, '#06b6d4');
+                ctx.fillStyle = grad;
+
+                // Rounded rect
+                const r = 112;
+                ctx.beginPath();
+                ctx.moveTo(r, 0);
+                ctx.lineTo(512 - r, 0);
+                ctx.quadraticCurveTo(512, 0, 512, r);
+                ctx.lineTo(512, 512 - r);
+                ctx.quadraticCurveTo(512, 512, 512 - r, 512);
+                ctx.lineTo(r, 512);
+                ctx.quadraticCurveTo(0, 512, 0, 512 - r);
+                ctx.lineTo(0, r);
+                ctx.quadraticCurveTo(0, 0, r, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                // Lightning bolt emblem
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(285, 75);
+                ctx.lineTo(135, 285);
+                ctx.lineTo(245, 285);
+                ctx.lineTo(215, 437);
+                ctx.lineTo(377, 220);
+                ctx.lineTo(265, 220);
+                ctx.closePath();
+                ctx.fill();
+
+                const iconDataUrl = canvas.toDataURL('image/png');
+                const fav = document.getElementById('dynamicFavicon');
+                const apple = document.getElementById('dynamicAppleIcon');
+                const modalImg = document.getElementById('pwaModalAppIcon');
+                if (fav) fav.href = iconDataUrl;
+                if (apple) apple.href = iconDataUrl;
+                if (modalImg) modalImg.src = iconDataUrl;
+
+                // Build Web App Manifest Blob
+                const manifestObj = {
+                    name: 'PulseHabit | Daily Habit & Streak Tracker',
+                    short_name: 'PulseHabit',
+                    description: 'Standalone habit tracker with 15-day editable window and streak charts.',
+                    start_url: window.location.href,
+                    display: 'standalone',
+                    orientation: 'portrait-primary',
+                    background_color: '#0B0F17',
+                    theme_color: '#0B0F17',
+                    icons: [
+                        { src: iconDataUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+                    ]
+                };
+                const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+                const manifestUrl = URL.createObjectURL(blob);
+                const manifestLink = document.getElementById('dynamicManifest');
+                if (manifestLink) manifestLink.href = manifestUrl;
+            } catch (e) {
+                // Ignore canvas/blob errors
+            }
+
+            // Detect if already running as Standalone installed PWA
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            updateStandaloneStatusUI(isStandalone);
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredInstallPrompt = e;
+                const banner = document.getElementById('nativeInstallBanner');
+                if (banner) banner.classList.remove('hidden');
+                const topText = document.getElementById('topInstallBtnText');
+                if (topText) topText.textContent = 'Install App';
+            });
+        }
+
+        function updateStandaloneStatusUI(isStandalone) {
+            const badge = document.getElementById('pwaModeBadge');
+            const modalBadge = document.getElementById('pwaModalStatusBadge');
+            if (isStandalone) {
+                if (badge) {
+                    badge.textContent = 'Standalone App Active';
+                    badge.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+                }
+                if (modalBadge) {
+                    modalBadge.textContent = 'Installed & Active';
+                }
+            }
+        }
+
+        async function triggerNativePwaInstall() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast('PulseHabit installed to your device!', 'check');
+                document.getElementById('nativeInstallBanner').classList.add('hidden');
+            }
+            deferredInstallPrompt = null;
+        }
+
+        // Web Audio API Synthesizer for check-ins AND frozen lock buzz
+        let audioCtx = null;
+        function playFeedbackSound(type) {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const now = audioCtx.currentTime;
+
+                if (type === 'check') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(820, now + 0.09);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'uncheck') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(360, now);
+                    osc.frequency.exponentialRampToValueAtTime(240, now + 0.08);
+                    gain.gain.setValueAtTime(0.07, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'locked') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(170, now);
+                    osc.frequency.setValueAtTime(140, now + 0.07);
+                    gain.gain.setValueAtTime(0.09, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                }
+            } catch (err) {}
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem('pulsehabit_pwa_v2');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed.habits) && parsed.habits.length > 0) {
+                        state.habits = parsed.habits.map(normalizeHabit);
+                        return;
+                    }
+                }
+                // Migrate v1 if present
+                const v1Raw = localStorage.getItem('pulsehabit_v1');
+                if (v1Raw) {
+                    const v1 = JSON.parse(v1Raw);
+                    if (Array.isArray(v1.habits) && v1.habits.length > 0) {
+                        state.habits = v1.habits.map(normalizeHabit);
+                        saveState();
+                        return;
+                    }
+                }
+                state.habits = createSeedHabits();
+                saveState();
+            } catch (e) {
+                state.habits = createSeedHabits();
+            }
+        }
+
+        function normalizeHabit(h) {
+            const logs = (h.logs && typeof h.logs === 'object') ? { ...h.logs } : {};
+            // If legacy `days` boolean array exists, map to current week's Monday..Sunday
+            if (Array.isArray(h.days)) {
+                const monKey = getMondayKey(TODAY_KEY);
+                h.days.forEach((val, idx) => {
+                    if (val) logs[addDays(monKey, idx)] = true;
+                });
+            }
+            return {
+                id: h.id || ('h-' + Date.now() + Math.random().toString(36).slice(2, 6)),
+                name: String(h.name || 'Daily Habit'),
+                emoji: String(h.emoji || '✨'),
+                category: ['Health', 'Mind', 'Work', 'Fitness'].includes(h.category) ? h.category : 'Health',
+                color: COLOR_MAP[h.color] ? h.color : 'indigo',
+                goal: Math.min(7, Math.max(1, parseInt(h.goal, 10) || 5)),
+                priorStreak: Math.max(0, parseInt(h.priorStreak, 10) || 0),
+                recordStreak: Math.max(0, parseInt(h.recordStreak, 10) || 0),
+                logs
+            };
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('pulsehabit_pwa_v2', JSON.stringify({
+                    version: 2,
+                    updatedAt: new Date().toISOString(),
+                    habits: state.habits
+                }));
+            } catch (e) {}
+        }
+
+        function getWeekDateKeys(mondayKey) {
+            return Array.from({ length: 7 }, (_, i) => addDays(mondayKey, i));
+        }
+
+        function computeHabitStats(habit) {
+            const weekKeys = getWeekDateKeys(state.viewedMondayKey);
+            const weeklyCount = weekKeys.filter(k => !!habit.logs[k]).length;
+
+            // Current streak: count consecutive days backward from TODAY_KEY (or yesterday if today isn't checked yet)
+            let cursor = TODAY_KEY;
+            if (!habit.logs[cursor]) {
+                const yesterday = addDays(TODAY_KEY, -1);
+                if (habit.logs[yesterday]) {
+                    cursor = yesterday;
+                }
+            }
+
+            let currentRun = 0;
+            if (habit.logs[cursor]) {
+                while (habit.logs[cursor]) {
+                    currentRun++;
+                    cursor = addDays(cursor, -1);
+                }
+            }
+
+            // Combine with priorStreak carry-over if the user has an active run
+            const currentStreak = currentRun > 0 ? currentRun + (habit.priorStreak || 0) : 0;
+
+            // Evaluate longest contiguous run across all logged dates
+            const sortedDates = Object.keys(habit.logs).filter(k => habit.logs[k]).sort();
+            let longestHistorical = 0;
+            let tempRun = 0;
+            let prevKey = null;
+            for (const dKey of sortedDates) {
+                if (prevKey && addDays(prevKey, 1) === dKey) {
+                    tempRun++;
+                } else {
+                    tempRun = 1;
+                }
+                if (tempRun > longestHistorical) longestHistorical = tempRun;
+                prevKey = dKey;
+            }
+
+            const bestStreak = Math.max(
+                habit.recordStreak || 0,
+                currentStreak,
+                longestHistorical + (habit.priorStreak || 0)
+            );
+
+            return { currentStreak, bestStreak, weeklyCount };
+        }
+
+        function toggleHabitDate(habitId, dateKey) {
+            const policy = getDatePolicy(dateKey);
+            const cellBtn = document.getElementById(`cell-${habitId}-${dateKey}`);
+            const inspBtn = document.getElementById(`insp-${habitId}-${dateKey}`);
+
+            if (policy === 'frozen') {
+                playFeedbackSound('locked');
+                [cellBtn, inspBtn].forEach(el => {
+                    if (el) {
+                        el.classList.remove('shake-lock');
+                        void el.offsetWidth;
+                        el.classList.add('shake-lock');
+                    }
+                });
+                const daysAgo = getDaysAgoDiff(dateKey);
+                showToast(`❄️ Frozen History (${daysAgo} days ago). Records older than 15 days are locked.`, 'lock');
+                return;
+            }
+
+            if (policy === 'future') {
+                playFeedbackSound('locked');
+                [cellBtn, inspBtn].forEach(el => {
+                    if (el) {
+                        el.classList.remove('shake-lock');
+                        void el.offsetWidth;
+                        el.classList.add('shake-lock');
+                    }
+                });
+                showToast(`⏳ Future Date (${dateKey}). You can log habits once this day arrives.`, 'lock');
+                return;
+            }
+
+            const habit = state.habits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            if (habit.logs[dateKey]) {
+                delete habit.logs[dateKey];
+                playFeedbackSound('uncheck');
+            } else {
+                habit.logs[dateKey] = true;
+                playFeedbackSound('check');
+            }
+
+            state.selectedDateKey = dateKey;
+            state.viewedMondayKey = getMondayKey(dateKey);
+            saveState();
+            renderAll();
+
+            const updatedBtn = document.getElementById(`cell-${habitId}-${dateKey}`);
+            if (updatedBtn) {
+                updatedBtn.classList.remove('check-pop');
+                void updatedBtn.offsetWidth;
+                updatedBtn.classList.add('check-pop');
+            }
+
+            // Celebrate if all habits are completed for this date
+            const allDone = state.habits.length > 0 && state.habits.every(h => !!h.logs[dateKey]);
+            if (habit.logs[dateKey] && allDone) {
+                triggerCelebration();
+                showToast(`All habits completed for ${formatReadableDate(dateKey)}!`, 'check');
+            }
+        }
+
+        function selectCalendarDate(dateKey) {
+            state.selectedDateKey = dateKey;
+            state.viewedMondayKey = getMondayKey(dateKey);
+            renderAll();
+        }
+
+        function handleDatePickerChange(val) {
+            if (!val) return;
+            selectCalendarDate(val);
+            const policy = getDatePolicy(val);
+            if (policy === 'frozen') {
+                showToast(`Viewing frozen record for ${formatReadableDate(val)} (Read-Only)`, 'lock');
+            }
+        }
+
+        function shiftWeek(weekDelta) {
+            const newMonday = addDays(state.viewedMondayKey, weekDelta * 7);
+            state.viewedMondayKey = newMonday;
+            // Also move selectedDateKey into that week (keep same weekday offset)
+            const currentOffset = Math.max(0, Math.min(6, -getDaysAgoDiff(state.selectedDateKey) + getDaysAgoDiff(getMondayKey(state.selectedDateKey))));
+            state.selectedDateKey = addDays(newMonday, currentOffset);
+            renderAll();
+        }
+
+        function jumpToToday() {
+            state.selectedDateKey = TODAY_KEY;
+            state.viewedMondayKey = getMondayKey(TODAY_KEY);
+            renderAll();
+            showToast('Jumped to Today', 'check');
+        }
+
+        function batchSetSelectedDate(markDone) {
+            const dateKey = state.selectedDateKey;
+            const policy = getDatePolicy(dateKey);
+
+            if (policy === 'frozen') {
+                playFeedbackSound('locked');
+                showToast(`❄️ ${formatReadableDate(dateKey)} is frozen (>15 days ago) and cannot be modified.`, 'lock');
+                return;
+            }
+            if (policy === 'future') {
+                playFeedbackSound('locked');
+                showToast(`⏳ Cannot batch-edit a future date (${formatReadableDate(dateKey)}).`, 'lock');
+                return;
+            }
+
+            if (state.habits.length === 0) return;
+
+            state.habits.forEach(h => {
+                if (markDone) h.logs[dateKey] = true;
+                else delete h.logs[dateKey];
+            });
+
+            playFeedbackSound(markDone ? 'check' : 'uncheck');
+            saveState();
+            renderAll();
+            if (markDone) {
+                triggerCelebration();
+                showToast(`Marked all habits done for ${formatReadableDate(dateKey)}!`, 'check');
+            } else {
+                showToast(`Cleared logs for ${formatReadableDate(dateKey)}`, 'check');
+            }
+        }
+
+        function formatReadableDate(dateKey) {
+            const dt = parseDateKey(dateKey);
+            return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatShortMonthDay(dateKey) {
+            const dt = parseDateKey(dateKey);
+            return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function renderCalendarBarAndStrip() {
+            // Sync date input
+            const dateInput = document.getElementById('calendarDateInput');
+            if (dateInput && dateInput.value !== state.selectedDateKey) {
+                dateInput.value = state.selectedDateKey;
+            }
+
+            const weekKeys = getWeekDateKeys(state.viewedMondayKey);
+            const firstDay = formatShortMonthDay(weekKeys[0]);
+            const lastDay = formatReadableDate(weekKeys[6]);
+            document.getElementById('weekRangeLabel').textContent = `${firstDay} – ${lastDay}`;
+
+            // Status pill for selected date
+            const policy = getDatePolicy(state.selectedDateKey);
+            const statusPill = document.getElementById('selectedDateStatusPill');
+            const daysDiff = getDaysAgoDiff(state.selectedDateKey);
+
+            if (policy === 'editable') {
+                const label = daysDiff === 0 ? 'Today • Editable' : `${daysDiff}d ago • Editable (${EDIT_WINDOW_DAYS - daysDiff}d left)`;
+                statusPill.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30';
+                statusPill.innerHTML = `<i class="ph-bold ph-lock-key-open mr-1"></i>${label}`;
+            } else if (policy === 'frozen') {
+                statusPill.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30';
+                statusPill.innerHTML = `<i class="ph-bold ph-snowflake mr-1"></i>Frozen (${daysDiff}d ago • Read-Only)`;
+            } else {
+                statusPill.className = 'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30';
+                statusPill.innerHTML = `<i class="ph-bold ph-hourglass mr-1"></i>Future Date (Locked)`;
+            }
+
+            // Render 21-Day Quick Strip (from 20 days ago up to Today)
+            const strip = document.getElementById('historyStripContainer');
+            const totalHabits = state.habits.length;
+            let stripHtml = '';
+
+            for (let back = 20; back >= 0; back--) {
+                const dKey = addDays(TODAY_KEY, -back);
+                const dt = parseDateKey(dKey);
+                const dayShort = dt.toLocaleDateString('en-US', { weekday: 'short' });
+                const dayNum = dt.getDate();
+                const dPolicy = getDatePolicy(dKey);
+                const isSelected = dKey === state.selectedDateKey;
+                const doneCount = state.habits.filter(h => !!h.logs[dKey]).length;
+                const allDone = totalHabits > 0 && doneCount === totalHabits;
+
+                let pillStyle = '';
+                if (isSelected) {
+                    pillStyle = dPolicy === 'frozen'
+                        ? 'bg-cyan-600 text-white ring-2 ring-cyan-400 shadow-sm'
+                        : 'bg-indigo-600 text-white ring-2 ring-indigo-400 shadow-sm';
+                } else if (dPolicy === 'frozen') {
+                    pillStyle = 'bg-slate-100/80 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500 border border-cyan-500/20 hover:border-cyan-500/50';
+                } else {
+                    pillStyle = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-emerald-500/20 hover:border-indigo-500/50';
+                }
+
+                stripHtml += `
+                    <button onclick="selectCalendarDate('${dKey}')" title="${formatReadableDate(dKey)} (${doneCount}/${totalHabits} done)"
+                        class="shrink-0 w-12 py-1.5 px-1 rounded-xl flex flex-col items-center justify-center transition ${pillStyle}">
+                        <span class="text-[9px] font-bold uppercase tracking-tighter flex items-center gap-0.5">
+                            ${dPolicy === 'frozen' ? '<i class="ph-bold ph-snowflake text-[9px] text-cyan-400"></i>' : ''}
+                            ${dayShort}
+                        </span>
+                        <span class="text-xs font-extrabold leading-tight mt-0.5">${dayNum}</span>
+                        <span class="w-1.5 h-1.5 rounded-full mt-1 ${
+                            allDone ? 'bg-emerald-400' : (doneCount > 0 ? 'bg-indigo-400' : 'bg-transparent')
+                        }"></span>
+                    </button>
+                `;
+            }
+            strip.innerHTML = stripHtml;
+        }
+
+        function renderDayHeaders() {
+            const headerRow = document.getElementById('dayHeaderRow');
+            const weekKeys = getWeekDateKeys(state.viewedMondayKey);
+
+            let html = `<th class="py-3.5 pl-4 sm:pl-5 pr-3 w-[230px]">Habit (Tap to Edit)</th>`;
+
+            weekKeys.forEach((dKey, idx) => {
+                const dt = parseDateKey(dKey);
+                const dayNum = dt.getDate();
+                const isSelected = dKey === state.selectedDateKey;
+                const isToday = dKey === TODAY_KEY;
+                const policy = getDatePolicy(dKey);
+
+                let statusIcon = '';
+                if (policy === 'frozen') statusIcon = '<i class="ph-bold ph-snowflake text-[10px] text-cyan-400" title="Frozen (>15d ago)"></i>';
+                else if (policy === 'future') statusIcon = '<i class="ph-bold ph-lock-simple text-[10px] text-amber-400" title="Future Date"></i>';
+
+                html += `
+                    <th class="py-2.5 px-1 text-center cursor-pointer select-none" onclick="selectCalendarDate('${dKey}')">
+                        <div class="inline-flex flex-col items-center min-w-[44px] px-2 py-1.5 rounded-xl transition ${
+                            isSelected
+                                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30'
+                                : 'hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+                        }">
+                            <span class="text-[10px] font-bold tracking-wider uppercase flex items-center gap-0.5">
+                                ${DAY_NAMES[idx].short} ${statusIcon}
+                            </span>
+                            <span class="text-xs font-extrabold mt-0.5">${dayNum}</span>
+                            <span class="w-1.5 h-1.5 rounded-full mt-0.5 ${
+                                isSelected ? 'bg-white' : (isToday ? 'bg-emerald-500' : 'bg-transparent')
+                            }"></span>
+                        </div>
+                    </th>
+                `;
+            });
+
+            html += `
+                <th class="py-3.5 px-2 text-center">Week Goal</th>
+                <th class="py-3.5 px-2 text-center">Streaks</th>
+                <th class="py-3.5 pl-1 pr-4 text-right">Edit</th>
+            `;
+            headerRow.innerHTML = html;
+
+            // Update batch buttons based on selected date policy
+            const selPolicy = getDatePolicy(state.selectedDateKey);
+            const markBtnLabel = document.getElementById('markAllBtnLabel');
+            const batchCompleteBtn = document.getElementById('batchCompleteBtn');
+            const batchClearBtn = document.getElementById('batchClearBtn');
+
+            if (markBtnLabel) {
+                markBtnLabel.textContent = selPolicy === 'editable'
+                    ? `Complete ${formatShortMonthDay(state.selectedDateKey)}`
+                    : `Locked (${formatShortMonthDay(state.selectedDateKey)})`;
+            }
+            const lockedClass = selPolicy !== 'editable' ? 'opacity-50 cursor-not-allowed' : '';
+            if (batchCompleteBtn) batchCompleteBtn.className = `text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition flex items-center gap-1.5 ${lockedClass}`;
+            if (batchClearBtn) batchClearBtn.className = `text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/10 hover:text-rose-500 text-slate-600 dark:text-slate-300 transition flex items-center gap-1 ${lockedClass}`;
+        }
+
+        function renderHabitRows() {
+            const tbody = document.getElementById('habitTableBody');
+            const emptyState = document.getElementById('emptyHabitState');
+            const weekKeys = getWeekDateKeys(state.viewedMondayKey);
+
+            const filtered = state.habits.filter(h =>
+                state.categoryFilter === 'all' ? true : h.category === state.categoryFilter
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = filtered.map(habit => {
+                const theme = COLOR_MAP[habit.color] || COLOR_MAP.indigo;
+                const { currentStreak, bestStreak, weeklyCount } = computeHabitStats(habit);
+                const goalMet = weeklyCount >= habit.goal;
+                const progressPct = Math.min(100, Math.round((weeklyCount / habit.goal) * 100));
+
+                const dayCells = weekKeys.map(dKey => {
+                    const done = !!habit.logs[dKey];
+                    const isSelectedCol = dKey === state.selectedDateKey;
+                    const policy = getDatePolicy(dKey);
+
+                    let btnAppearance = '';
+                    let iconHtml = '';
+
+                    if (policy === 'frozen') {
+                        btnAppearance = done
+                            ? `${theme.bg} opacity-65 text-white ring-1 ring-cyan-400/50 cursor-not-allowed`
+                            : 'bg-slate-100/70 dark:bg-slate-800/40 text-cyan-500/50 border border-dashed border-cyan-500/30 cursor-not-allowed';
+                        iconHtml = done
+                            ? `<i class="ph-bold ph-check text-sm"></i>`
+                            : `<i class="ph-bold ph-snowflake text-xs"></i>`;
+                    } else if (policy === 'future') {
+                        btnAppearance = 'bg-slate-100/40 dark:bg-slate-800/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 cursor-not-allowed';
+                        iconHtml = `<i class="ph-bold ph-lock-simple text-xs"></i>`;
+                    } else {
+                        btnAppearance = done
+                            ? `${theme.bg} text-white shadow-sm`
+                            : 'bg-slate-100 dark:bg-slate-800/90 text-transparent hover:border hover:border-slate-300 dark:hover:border-slate-700';
+                        iconHtml = `<i class="ph-bold ph-check text-base ${done ? 'scale-100' : 'scale-0'} transition-transform"></i>`;
+                    }
+
+                    return `
+                        <td class="py-3 px-1 text-center ${isSelectedCol ? 'bg-indigo-500/[0.04] dark:bg-indigo-500/[0.08]' : ''}">
+                            <button
+                                id="cell-${habit.id}-${dKey}"
+                                onclick="toggleHabitDate('${habit.id}', '${dKey}')"
+                                title="${formatReadableDate(dKey)} (${policy.toUpperCase()})"
+                                class="w-10 h-10 rounded-xl inline-flex items-center justify-center transition-all duration-200 ${btnAppearance}">
+                                ${iconHtml}
+                            </button>
+                        </td>
+                    `;
+                }).join('');
+
+                return `
+                    <tr class="group hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition">
+                        <td class="py-3 pl-4 sm:pl-5 pr-2">
+                            <div onclick="openHabitModal('${habit.id}')" class="flex items-center gap-2.5 cursor-pointer group/title">
+                                <span class="w-9 h-9 rounded-xl ${theme.lightBg} flex items-center justify-center text-base shrink-0">${escapeHtml(habit.emoji || '✨')}</span>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-slate-800 dark:text-slate-100 group-hover/title:text-indigo-500 transition truncate max-w-[155px]">${escapeHtml(habit.name)}</p>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md ${theme.lightBg} ${theme.text}">${habit.category}</span>
+                                        ${goalMet ? `<span class="text-[10px] font-semibold text-emerald-500 flex items-center gap-0.5"><i class="ph-fill ph-seal-check"></i>Met</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        ${dayCells}
+                        <td class="py-3 px-2 text-center">
+                            <div class="w-20 mx-auto">
+                                <div class="flex items-center justify-between text-[11px] mb-1">
+                                    <span class="font-bold ${goalMet ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-300'}">${weeklyCount}/${habit.goal}</span>
+                                    <span class="text-[10px] text-slate-400">${progressPct}%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div class="h-full rounded-full ${goalMet ? 'bg-emerald-500' : theme.bg} transition-all duration-300" style="width: ${progressPct}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-2 text-center">
+                            <div class="inline-flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/70 px-2.5 py-1 rounded-xl">
+                                <span class="flex items-center gap-0.5 text-amber-500 text-xs font-bold" title="Current Active Streak">
+                                    <i class="ph-fill ph-fire"></i>${currentStreak}d
+                                </span>
+                                <span class="text-slate-300 dark:text-slate-700">|</span>
+                                <span class="flex items-center gap-0.5 text-purple-500 text-[11px] font-semibold" title="All-Time Best Streak">
+                                    <i class="ph-fill ph-trophy"></i>${bestStreak}d
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-3 pl-1 pr-4 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <button onclick="openHabitModal('${habit.id}')" title="Customize habit" class="p-2 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition">
+                                    <i class="ph-bold ph-pencil-simple text-base"></i>
+                                </button>
+                                <button onclick="deleteHabit('${habit.id}')" title="Delete habit" class="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition">
+                                    <i class="ph-bold ph-trash text-base"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSingleDateInspector() {
+            const dateKey = state.selectedDateKey;
+            const dt = parseDateKey(dateKey);
+            const policy = getDatePolicy(dateKey);
+            const total = state.habits.length;
+            const doneCount = state.habits.filter(h => !!h.logs[dateKey]).length;
+            const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+            document.getElementById('inspectorBadgeDay').textContent = dt.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+            document.getElementById('inspectorBadgeNum').textContent = dt.getDate();
+            document.getElementById('inspectorTitle').textContent = formatReadableDate(dateKey);
+            document.getElementById('inspectorSubtitle').textContent = `${doneCount} of ${total} habits completed`;
+            document.getElementById('inspectorPercent').textContent = `${pct}%`;
+
+            const lockBadge = document.getElementById('inspectorLockBadge');
+            const hint = document.getElementById('inspectorPolicyHint');
+            if (policy === 'editable') {
+                lockBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500';
+                lockBadge.textContent = 'Editable';
+                hint.textContent = 'Tap habit to toggle';
+            } else if (policy === 'frozen') {
+                lockBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400';
+                lockBadge.innerHTML = '<i class="ph-bold ph-snowflake mr-0.5"></i>Frozen';
+                hint.textContent = 'Read-only (>15d ago)';
+            } else {
+                lockBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400';
+                lockBadge.textContent = 'Future Locked';
+                hint.textContent = 'Locked until date arrives';
+            }
+
+            const listEl = document.getElementById('inspectorHabitsList');
+            const filteredHabits = state.habits.filter(h => {
+                const isDone = !!h.logs[dateKey];
+                if (state.inspectorFilter === 'done') return isDone;
+                if (state.inspectorFilter === 'missed') return !isDone;
+                return true;
+            });
+
+            if (filteredHabits.length === 0) {
+                listEl.innerHTML = `<div class="py-6 text-center text-xs text-slate-400">No habits match this filter for ${formatShortMonthDay(dateKey)}.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = filteredHabits.map(h => {
+                const isDone = !!h.logs[dateKey];
+                const theme = COLOR_MAP[h.color] || COLOR_MAP.indigo;
+
+                return `
+                    <div id="insp-${h.id}-${dateKey}" onclick="toggleHabitDate('${h.id}', '${dateKey}')"
+                        class="p-2.5 rounded-xl border transition flex items-center justify-between gap-2 cursor-pointer select-none ${
+                            isDone
+                                ? 'bg-emerald-500/[0.07] border-emerald-500/30'
+                                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200/70 dark:border-slate-800'
+                        } ${policy !== 'editable' ? 'opacity-75' : 'hover:border-indigo-500/40'}">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="text-base shrink-0">${escapeHtml(h.emoji || '✨')}</span>
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold truncate ${isDone ? 'line-through text-slate-400 dark:text-slate-500' : ''}">${escapeHtml(h.name)}</p>
+                                <span class="text-[10px] ${theme.text} font-medium">${h.category}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${policy === 'frozen' ? '<i class="ph-bold ph-snowflake text-cyan-400 text-xs"></i>' : ''}
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                isDone
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-slate-200/70 dark:bg-slate-700 text-slate-400'
+                            }">
+                                <i class="ph-bold ${isDone ? 'ph-check' : 'ph-circle'}"></i>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setInspectorFilter(filter) {
+            state.inspectorFilter = filter;
+            ['all', 'done', 'missed'].forEach(tab => {
+                const btn = document.getElementById(`inspTab-${tab}`);
+                if (!btn) return;
+                if (tab === filter) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm transition';
+                } else {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-slate-500 dark:text-slate-400 transition';
+                }
+            });
+            renderSingleDateInspector();
+        }
+
+        function renderKPIsAndCharts() {
+            const totalHabits = state.habits.length;
+            const weekKeys = getWeekDateKeys(state.viewedMondayKey);
+            const totalPossibleWeek = totalHabits * 7;
+            let totalDoneWeek = 0;
+
+            let topCurrentStreak = 0;
+            let topCurrentHabit = 'Log habits today';
+            let topBestStreak = 0;
+            let topBestHabit = 'No record yet';
+
+            state.habits.forEach(h => {
+                const { currentStreak, bestStreak, weeklyCount } = computeHabitStats(h);
+                totalDoneWeek += weeklyCount;
+                if (currentStreak > topCurrentStreak) {
+                    topCurrentStreak = currentStreak;
+                    topCurrentHabit = `${h.emoji || ''} ${h.name}`;
+                }
+                if (bestStreak > topBestStreak) {
+                    topBestStreak = bestStreak;
+                    topBestHabit = `${h.emoji || ''} ${h.name}`;
+                }
+            });
+
+            const weeklyRate = totalPossibleWeek > 0 ? Math.round((totalDoneWeek / totalPossibleWeek) * 100) : 0;
+            document.getElementById('kpiWeeklyRate').textContent = `${weeklyRate}%`;
+            document.getElementById('kpiWeeklyDelta').textContent = `${totalDoneWeek}/${totalPossibleWeek}`;
+
+            const circumference = 150.79;
+            const offset = circumference - (weeklyRate / 100) * circumference;
+            const ring = document.getElementById('kpiScoreRing');
+            if (ring) ring.style.strokeDashoffset = offset;
+
+            document.getElementById('kpiCurrentStreak').textContent = `${topCurrentStreak}d`;
+            document.getElementById('kpiCurrentStreakHabit').textContent = topCurrentHabit;
+
+            document.getElementById('kpiBestStreak').textContent = `${topBestStreak}d`;
+            document.getElementById('kpiBestStreakHabit').textContent = topBestHabit;
+
+            const selDayDone = state.habits.filter(h => !!h.logs[state.selectedDateKey]).length;
+            document.getElementById('kpiTodayCount').textContent = `${selDayDone}/${totalHabits}`;
+            document.getElementById('kpiSelectedDayName').textContent = formatShortMonthDay(state.selectedDateKey);
+            const policy = getDatePolicy(state.selectedDateKey);
+            document.getElementById('kpiSelectedDateSub').textContent = policy === 'frozen' ? '❄️ Frozen History' : (policy === 'editable' ? '✓ Editable Window' : '⏳ Future Date');
+
+            const dailyStats = weekKeys.map((dKey, idx) => {
+                const count = state.habits.filter(h => !!h.logs[dKey]).length;
+                const pct = totalHabits > 0 ? Math.round((count / totalHabits) * 100) : 0;
+                const dt = parseDateKey(dKey);
+                return {
+                    dateKey: dKey,
+                    short: DAY_NAMES[idx].short,
+                    dayNum: dt.getDate(),
+                    policy: getDatePolicy(dKey),
+                    count,
+                    total: totalHabits,
+                    pct
+                };
+            });
+
+            renderWeeklyBars(dailyStats);
+            renderWeeklyAreaSvg(dailyStats);
+            renderStreakLeaderboard();
+        }
+
+        function renderWeeklyBars(dailyStats) {
+            const container = document.getElementById('weeklyBarChart');
+            const goalLineHtml = `
+                <div class="absolute inset-x-0 top-6 border-t border-dashed border-emerald-500/40 pointer-events-none flex justify-end">
+                    <span class="text-[10px] font-semibold text-emerald-500 bg-white dark:bg-slate-900 px-1 -mt-2">100% Goal</span>
+                </div>
+            `;
+
+            const barsHtml = dailyStats.map(stat => {
+                const isSelected = stat.dateKey === state.selectedDateKey;
+                const isPerfect = stat.pct === 100 && stat.total > 0;
+                const barHeight = Math.max(8, Math.round((stat.pct / 100) * 124));
+
+                let barColor = 'bg-indigo-500/80 hover:bg-indigo-500';
+                if (stat.policy === 'frozen') barColor = 'bg-cyan-500/70 hover:bg-cyan-500';
+                else if (isPerfect) barColor = 'bg-emerald-500 hover:bg-emerald-400';
+                else if (isSelected) barColor = 'bg-indigo-600 dark:bg-indigo-400';
+
+                return `
+                    <div onclick="selectCalendarDate('${stat.dateKey}')" class="flex-1 flex flex-col items-center cursor-pointer group select-none z-10">
+                        <span class="text-[10px] font-bold mb-1 transition ${
+                            isSelected ? 'text-indigo-600 dark:text-indigo-400 scale-110' : 'text-slate-400 opacity-0 group-hover:opacity-100'
+                        }">${stat.pct}%</span>
+                        <div class="w-full max-w-[34px] h-32 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex items-end p-1 overflow-hidden ${
+                            isSelected ? 'ring-2 ring-indigo-500/60' : ''
+                        }">
+                            <div class="w-full rounded-lg bar-grow ${barColor}" style="height: ${barHeight}px"></div>
+                        </div>
+                        <span class="mt-1.5 text-[10px] font-bold ${
+                            isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'
+                        }">${stat.short} ${stat.dayNum}</span>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = goalLineHtml + barsHtml;
+        }
+
+        function renderWeeklyAreaSvg(dailyStats) {
+            const svg = document.getElementById('weeklyAreaSvg');
+            const width = 320;
+            const height = 140;
+            const padX = 24;
+            const padTop = 18;
+            const usableW = width - padX * 2;
+            const usableH = height - padTop - 22;
+
+            const points = dailyStats.map((s, i) => {
+                const x = padX + (i / 6) * usableW;
+                const y = padTop + usableH - (s.pct / 100) * usableH;
+                return { x, y, stat: s };
+            });
+
+            const lineCoords = points.map(p => `${p.x},${p.y}`).join(' ');
+            const areaCoords = `${points[0].x},${padTop + usableH} ${lineCoords} ${points[points.length - 1].x},${padTop + usableH}`;
+
+            const circlesHtml = points.map(p => {
+                const isSelected = p.stat.dateKey === state.selectedDateKey;
+                return `
+                    <g class="cursor-pointer" onclick="selectCalendarDate('${p.stat.dateKey}')">
+                        <circle cx="${p.x}" cy="${p.y}" r="${isSelected ? 6 : 4}"
+                            fill="${isSelected ? '#4f46e5' : '#6366f1'}"
+                            stroke="#ffffff" stroke-width="2" />
+                        <text x="${p.x}" y="${p.y - 10}" text-anchor="middle"
+                            class="text-[9px] font-bold fill-slate-500 dark:fill-slate-300">${p.stat.pct}%</text>
+                        <text x="${p.x}" y="${height + 14}" text-anchor="middle"
+                            class="text-[9px] font-bold ${isSelected ? 'fill-indigo-500' : 'fill-slate-400'}">${p.stat.short} ${p.stat.dayNum}</text>
+                    </g>
+                `;
+            }).join('');
+
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.45"/>
+                        <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                <line x1="${padX}" y1="${padTop}" x2="${width - padX}" y2="${padTop}" stroke="#10b981" stroke-dasharray="4 4" stroke-opacity="0.4" />
+                <polygon points="${areaCoords}" fill="url(#areaGrad)" />
+                <polyline fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${lineCoords}" />
+                ${circlesHtml}
+            `;
+        }
+
+        function renderStreakLeaderboard() {
+            const container = document.getElementById('streakLeaderboard');
+            if (state.habits.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Add habits to track streaks.</p>`;
+                return;
+            }
+
+            const ranked = state.habits.map(h => {
+                const stats = computeHabitStats(h);
+                return { habit: h, ...stats };
+            }).sort((a, b) => b.currentStreak - a.currentStreak || b.bestStreak - a.bestStreak);
+
+            container.innerHTML = ranked.map(item => {
+                const theme = COLOR_MAP[item.habit.color] || COLOR_MAP.indigo;
+                const ratio = item.bestStreak > 0 ? Math.min(100, Math.round((item.currentStreak / item.bestStreak) * 100)) : 0;
+
+                return `
+                    <div onclick="openHabitModal('${item.habit.id}')" class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800/80 hover:border-indigo-500/40 cursor-pointer transition space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-sm shrink-0">${escapeHtml(item.habit.emoji || '✨')}</span>
+                                <p class="text-xs font-semibold truncate">${escapeHtml(item.habit.name)}</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0 text-xs">
+                                <span class="font-bold text-amber-500 flex items-center gap-0.5">
+                                    <i class="ph-fill ph-fire"></i> ${item.currentStreak}d
+                                </span>
+                                <span class="text-slate-400 text-[11px]">/ Best ${item.bestStreak}d</span>
+                            </div>
+                        </div>
+                        <div class="w-full h-1.5 rounded-full bg-slate-200/70 dark:bg-slate-700/60 overflow-hidden">
+                            <div class="h-full rounded-full ${theme.bg} transition-all duration-500" style="width: ${ratio}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setEmoji(emoji) {
+            document.getElementById('habitEmojiInput').value = emoji;
+        }
+
+        function openHabitModal(habitId = null) {
+            const modal = document.getElementById('habitModal');
+            const idInput = document.getElementById('editingHabitId');
+            const titleEl = document.getElementById('habitModalTitle');
+            const deleteBtn = document.getElementById('modalDeleteHabitBtn');
+
+            if (habitId) {
+                const habit = state.habits.find(h => h.id === habitId);
+                if (!habit) return;
+                idInput.value = habit.id;
+                titleEl.textContent = 'Customize Habit';
+                document.getElementById('habitEmojiInput').value = habit.emoji || '✨';
+                document.getElementById('habitNameInput').value = habit.name;
+                document.getElementById('habitCategoryInput').value = habit.category;
+                document.getElementById('habitGoalInput').value = String(habit.goal);
+                document.getElementById('habitPriorStreakInput').value = habit.priorStreak || 0;
+                document.getElementById('habitRecordStreakInput').value = habit.recordStreak || 0;
+                selectHabitColor(habit.color || 'indigo');
+                deleteBtn.classList.remove('hidden');
+            } else {
+                idInput.value = '';
+                titleEl.textContent = 'Create Custom Habit';
+                document.getElementById('habitForm').reset();
+                document.getElementById('habitEmojiInput').value = '💧';
+                document.getElementById('habitPriorStreakInput').value = 0;
+                document.getElementById('habitRecordStreakInput').value = 0;
+                selectHabitColor('indigo');
+                deleteBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => document.getElementById('habitNameInput').focus(), 50);
+        }
+
+        function closeHabitModal() {
+            const modal = document.getElementById('habitModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function selectHabitColor(color) {
+            state.selectedNewColor = color;
+            document.querySelectorAll('.color-swatch').forEach(btn => {
+                if (btn.dataset.color === color) {
+                    btn.className = `color-swatch w-8 h-8 rounded-full bg-${color}-500 ring-2 ring-offset-2 ring-${color}-500 dark:ring-offset-slate-900 transition`;
+                } else {
+                    btn.className = `color-swatch w-8 h-8 rounded-full bg-${btn.dataset.color}-500 opacity-60 hover:opacity-100 transition`;
+                }
+            });
+        }
+
+        function handleSaveHabit(e) {
+            e.preventDefault();
+            const editingId = document.getElementById('editingHabitId').value;
+            const emoji = document.getElementById('habitEmojiInput').value.trim() || '✨';
+            const name = document.getElementById('habitNameInput').value.trim();
+            const category = document.getElementById('habitCategoryInput').value;
+            const goal = Math.min(7, Math.max(1, parseInt(document.getElementById('habitGoalInput').value, 10) || 5));
+            const priorStreak = Math.max(0, parseInt(document.getElementById('habitPriorStreakInput').value, 10) || 0);
+            const recordStreak = Math.max(0, parseInt(document.getElementById('habitRecordStreakInput').value, 10) || 0);
+
+            if (!name) return;
+
+            if (editingId) {
+                const habit = state.habits.find(h => h.id === editingId);
+                if (habit) {
+                    habit.emoji = emoji;
+                    habit.name = name;
+                    habit.category = category;
+                    habit.goal = goal;
+                    habit.priorStreak = priorStreak;
+                    habit.recordStreak = recordStreak;
+                    habit.color = state.selectedNewColor;
+                }
+                showToast(`Updated "${name}"`, 'check');
+            } else {
+                state.habits.unshift({
+                    id: 'h-' + Date.now(),
+                    name,
+                    emoji,
+                    category,
+                    goal,
+                    priorStreak,
+                    recordStreak,
+                    color: state.selectedNewColor,
+                    logs: {}
+                });
+                showToast(`Created "${name}"`, 'check');
+            }
+
+            saveState();
+            closeHabitModal();
+            renderAll();
+        }
+
+        function deleteHabitFromModal() {
+            const editingId = document.getElementById('editingHabitId').value;
+            if (!editingId) return;
+            closeHabitModal();
+            deleteHabit(editingId);
+        }
+
+        function deleteHabit(habitId) {
+            const target = state.habits.find(h => h.id === habitId);
+            if (!target) return;
+
+            openConfirmModal(
+                `Delete "${target.name}"?`,
+                `This will remove this habit and its historical logs from your dashboard.`,
+                () => {
+                    state.habits = state.habits.filter(h => h.id !== habitId);
+                    saveState();
+                    renderAll();
+                    showToast(`Deleted "${target.name}"`, 'check');
+                }
+            );
+        }
+
+        // Export & Import Handlers
+        function openDataModal() {
+            const m = document.getElementById('dataModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closeDataModal() {
+            const m = document.getElementById('dataModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function exportJsonBackup() {
+            const payload = {
+                app: 'PulseHabit PWA',
+                version: 2,
+                exportedAt: new Date().toISOString(),
+                habits: state.habits
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pulsehabit-backup-${TODAY_KEY}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Downloaded JSON backup!', 'check');
+        }
+
+        function exportCsvSpreadsheet() {
+            // Generate UTF-8 BOM CSV with Last 15 Days columns
+            const last15Keys = Array.from({ length: EDIT_WINDOW_DAYS }, (_, i) => addDays(TODAY_KEY, -(EDIT_WINDOW_DAYS - 1 - i)));
+            const headers = ['Habit ID', 'Emoji', 'Habit Name', 'Category', 'Weekly Target', 'Current Streak', 'Best Streak', ...last15Keys];
+
+            const rows = state.habits.map(h => {
+                const { currentStreak, bestStreak } = computeHabitStats(h);
+                const dateCols = last15Keys.map(k => h.logs[k] ? '1' : '0');
+                return [
+                    h.id,
+                    h.emoji || '✨',
+                    `"${String(h.name).replace(/"/g, '""')}"`,
+                    h.category,
+                    h.goal,
+                    currentStreak,
+                    bestStreak,
+                    ...dateCols
+                ].join(',');
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pulsehabit-15day-report-${TODAY_KEY}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Exported Excel CSV spreadsheet!', 'check');
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                applyImportedJsonString(e.target.result);
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function handleImportRawJson() {
+            const raw = document.getElementById('rawJsonPasteInput').value.trim();
+            if (!raw) {
+                showToast('Paste JSON backup content first.', 'lock');
+                return;
+            }
+            applyImportedJsonString(raw);
+        }
+
+        function applyImportedJsonString(jsonStr) {
+            try {
+                const parsed = JSON.parse(jsonStr);
+                const habitsArray = Array.isArray(parsed) ? parsed : parsed.habits;
+                if (!Array.isArray(habitsArray) || habitsArray.length === 0) {
+                    showToast('Invalid JSON format: no habits array found.', 'lock');
+                    return;
+                }
+                state.habits = habitsArray.map(normalizeHabit);
+                saveState();
+                renderAll();
+                closeDataModal();
+                document.getElementById('rawJsonPasteInput').value = '';
+                showToast(`Successfully imported ${state.habits.length} habits!`, 'check');
+            } catch (err) {
+                showToast('Could not parse JSON backup. Check syntax.', 'lock');
+            }
+        }
+
+        // PWA Modal & Mobile Bottom Nav Switching
+        function openPwaModal() {
+            const m = document.getElementById('pwaModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+        function closePwaModal() {
+            const m = document.getElementById('pwaModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function switchMobileTab(tab) {
+            state.mobileTab = tab;
+            ['track', 'inspector', 'charts'].forEach(t => {
+                const btn = document.getElementById(`mnav-${t}`);
+                if (!btn) return;
+                if (t === tab) {
+                    btn.className = 'flex flex-col items-center justify-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold';
+                } else {
+                    btn.className = 'flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 font-medium';
+                }
+            });
+
+            const targetId = tab === 'track' ? 'matrixSection' : (tab === 'inspector' ? 'inspectorSection' : 'chartsSection');
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function setCategoryFilter(category) {
+            state.categoryFilter = category;
+            document.querySelectorAll('.cat-tab').forEach(btn => {
+                if (btn.dataset.cat === category) {
+                    btn.className = 'cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-indigo-600 text-white shrink-0';
+                } else {
+                    btn.className = 'cat-tab px-3 py-1.5 rounded-xl text-xs font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 shrink-0';
+                }
+            });
+            renderHabitRows();
+        }
+
+        function setChartMode(mode) {
+            state.chartMode = mode;
+            const barContainer = document.getElementById('barChartContainer');
+            const areaContainer = document.getElementById('areaChartContainer');
+            const btnBar = document.getElementById('chartModeBar');
+            const btnArea = document.getElementById('chartModeArea');
+
+            if (mode === 'bar') {
+                barContainer.classList.remove('hidden');
+                areaContainer.classList.add('hidden');
+                btnBar.className = 'px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-900 shadow-sm text-indigo-600 dark:text-indigo-400 transition';
+                btnArea.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition';
+            } else {
+                barContainer.classList.add('hidden');
+                areaContainer.classList.remove('hidden');
+                btnArea.className = 'px-2.5 py-1 rounded-md font-semibold bg-white dark:bg-slate-900 shadow-sm text-indigo-600 dark:text-indigo-400 transition';
+                btnBar.className = 'px-2.5 py-1 rounded-md font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition';
+            }
+        }
+
+        function openConfirmModal(title, desc, onConfirm) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalDesc').textContent = desc;
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const actionBtn = document.getElementById('confirmModalActionBtn');
+            actionBtn.onclick = () => {
+                onConfirm();
+                closeConfirmModal();
+            };
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            const icon = document.getElementById('themeIcon');
+            icon.className = isDark ? 'ph-bold ph-sun text-lg' : 'ph-bold ph-moon text-lg';
+            const themeMeta = document.getElementById('themeColorMeta');
+            if (themeMeta) themeMeta.setAttribute('content', isDark ? '#0B0F17' : '#F8FAFC');
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            icon.className = state.soundEnabled ? 'ph-bold ph-speaker-high text-lg' : 'ph-bold ph-speaker-slash text-lg text-slate-400';
+            showToast(state.soundEnabled ? 'Sound effects enabled' : 'Sound effects muted', 'check');
+        }
+
+        function triggerCelebration() {
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 55, spread: 65, origin: { y: 0.72 } });
+            }
+        }
+
+        let toastTimer = null;
+        function showToast(message, iconType = 'check') {
+            const banner = document.getElementById('toastBanner');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').textContent = message;
+
+            if (iconType === 'lock') {
+                icon.className = 'ph-fill ph-snowflake text-cyan-400 text-lg shrink-0';
+            } else {
+                icon.className = 'ph-fill ph-check-circle text-emerald-400 dark:text-emerald-600 text-lg shrink-0';
+            }
+
+            banner.classList.remove('translate-y-24', 'opacity-0');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                banner.classList.add('translate-y-24', 'opacity-0');
+            }, 2800);
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, m => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+
+        function renderAll() {
+            renderCalendarBarAndStrip();
+            renderDayHeaders();
+            renderHabitRows();
+            renderSingleDateInspector();
+            renderKPIsAndCharts();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('currentDateDisplay').textContent = now.toLocaleDateString('en-US', {
+                weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+            }) + ' • 15-Day Edit Window';
+
+            setupStandalonePWA();
+            loadState();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
