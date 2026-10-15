@@ -5,19 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>PulseHabit — Daily Habit & Streak Tracker</title>
 
-  <!-- Standalone Mobile Web App (PWA) Meta Tags -->
+  <!-- Standalone Mobile Web App Meta Tags -->
   <meta name="theme-color" content="#0f172a" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="PulseHabit" />
 
-  <!-- External Manifest Link (Used when hosted on GitHub Pages alongside manifest.json) -->
-  <link rel="manifest" href="./manifest.json" id="manifestLink" />
-
-  <!-- Static Pre-Encoded SVG App Icon (Fallback before PNG generation) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230f172a'/%3E%3Crect x='24' y='24' width='464' height='464' rx='95' fill='none' stroke='%236366f1' stroke-width='12' stroke-opacity='0.4'/%3E%3Cpath d='M112 272 L192 272 L232 160 L288 352 L328 240 L400 240' fill='none' stroke='%2310b981' stroke-width='36' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='400' cy='240' r='22' fill='%236366f1'/%3E%3C/svg%3E" id="faviconLink" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230f172a'/%3E%3Cpath d='M112 272 L192 272 L232 160 L288 352 L328 240 L400 240' fill='none' stroke='%2310b981' stroke-width='36' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" id="appleTouchIconLink" />
+  <!-- Single-File Embedded Icons & Manifest (Auto-upgraded to High-Res PNG on load) -->
+  <link rel="icon" id="dynamicFavicon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230f172a'/%3E%3Cpath d='M112 272 L192 272 L232 160 L288 352 L328 240 L400 240' fill='none' stroke='%2310b981' stroke-width='38' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" id="dynamicAppleIcon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%230f172a'/%3E%3Cpath d='M112 272 L192 272 L232 160 L288 352 L328 240 L400 240' fill='none' stroke='%2310b981' stroke-width='38' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="manifest" id="dynamicManifest" href="data:application/manifest+json,%7B%22name%22%3A%22PulseHabit%22%2C%22short_name%22%3A%22PulseHabit%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%230b1120%22%2C%22theme_color%22%3A%22%230f172a%22%7D" />
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,8 +23,6 @@
   <style>
     :root {
       --bg-dark: #0b1120;
-      --card-dark: #111827;
-      --border-dark: #1e293b;
     }
     body {
       background-color: var(--bg-dark);
@@ -38,6 +34,23 @@
     @media (min-width: 768px) {
       body { padding-bottom: 32px; }
     }
+
+    /* Bulletproof Modal Visibility System (No Tailwind hidden/flex conflict!) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background-color: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open {
+      display: flex !important;
+    }
+
     .custom-scroll::-webkit-scrollbar {
       height: 6px;
       width: 6px;
@@ -63,7 +76,7 @@
 <body class="min-h-screen selection:bg-indigo-500 selection:text-white">
 
   <!-- TOP NAVIGATION BAR -->
-  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <!-- Brand -->
       <div class="flex items-center gap-3">
@@ -77,7 +90,7 @@
               15-Day Lock
             </span>
           </div>
-          <p class="text-xs text-slate-400">Daily Goal &amp; Streak Dashboard</p>
+          <p class="text-xs text-slate-400">Single-File Habit &amp; Streak Dashboard</p>
         </div>
       </div>
 
@@ -96,17 +109,26 @@
             type="button"
             onclick="window.jumpToToday()"
             class="ml-2 px-2 py-0.5 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 font-medium transition"
-            title="Jump back to Today"
           >
             Today
           </button>
         </div>
 
+        <!-- Instant Fullscreen Mode Button (Zero-Install Alternative) -->
+        <button
+          type="button"
+          onclick="window.toggleFullscreenMode()"
+          class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition"
+          title="Launch Full-Screen App View without installing"
+        >
+          <span>⛶</span>
+          <span id="fullscreenBtnText">Fullscreen</span>
+        </button>
+
         <!-- Backup / Export / Import -->
         <button
           type="button"
-          id="btnOpenDataModal"
-          onclick="window.openDataModal('export')"
+          onclick="window.openModalById('dataModal')"
           class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition"
         >
           <span>💾</span>
@@ -116,19 +138,17 @@
         <!-- Clear Data Button -->
         <button
           type="button"
-          id="btnOpenResetModal"
-          onclick="window.openResetModal()"
+          onclick="window.openModalById('resetModal')"
           class="px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/70 border border-rose-700/50 text-xs font-medium text-rose-200 flex items-center gap-1.5 transition"
         >
           <span>🧹</span>
           <span>Clear Data</span>
         </button>
 
-        <!-- App Setup (PWA) Button -->
+        <!-- App Setup Button -->
         <button
           type="button"
-          id="btnOpenInstallModal"
-          onclick="window.openInstallModal()"
+          onclick="window.openAppSetupModal()"
           class="px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-700/50 text-xs font-medium text-emerald-200 flex items-center gap-1.5 transition"
         >
           <span>📱</span>
@@ -190,13 +210,11 @@
       </div>
     </section>
 
-    <!-- 21-DAY TIMELINE STRIP (SHOWS 15-DAY EDITABLE WINDOW VS FROZEN HISTORY) -->
+    <!-- 21-DAY TIMELINE STRIP -->
     <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div>
-          <h2 class="text-sm font-bold text-white flex items-center gap-2">
-            <span>🗓️ 21-Day History &amp; 15-Day Edit Window</span>
-          </h2>
+          <h2 class="text-sm font-bold text-white">🗓️ 21-Day History &amp; 15-Day Edit Window</h2>
           <p class="text-xs text-slate-400">
             Tap any date below to inspect it. The last <strong>15 days</strong> (Today back to 14 days ago) are editable; older dates are <strong>❄️ Frozen</strong>.
           </p>
@@ -214,56 +232,40 @@
       <div id="historyStripContainer" class="flex items-center gap-2 overflow-x-auto custom-scroll pb-2"></div>
     </section>
 
-    <!-- MAIN GRID: LEFT = HABIT MATRIX | RIGHT = SPECIFIC DAY INSPECTOR & STREAK CHART -->
+    <!-- MAIN GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- LEFT 7 COLS: WEEKLY HABIT MATRIX -->
-      <section id="sectionMatrix" class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-        <div>
-          <!-- Matrix Header & Week Navigation -->
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 class="text-base font-bold text-white">Weekly Habit Matrix</h2>
-              <p id="weekRangeLabel" class="text-xs text-slate-400">Mon – Sun</p>
-            </div>
-
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                onclick="window.shiftWeek(-1)"
-                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition"
-              >
-                ◀ Prev Week
-              </button>
-              <button
-                type="button"
-                onclick="window.jumpToToday()"
-                class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-xs text-indigo-300 border border-indigo-500/30 transition"
-              >
-                This Week
-              </button>
-              <button
-                type="button"
-                onclick="window.shiftWeek(1)"
-                class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition"
-              >
-                Next Week ▶
-              </button>
-            </div>
+      <section id="sectionMatrix" class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Weekly Habit Matrix</h2>
+            <p id="weekRangeLabel" class="text-xs text-slate-400">Mon – Sun</p>
           </div>
 
-          <!-- Category Filter Pills -->
-          <div id="categoryFilterBar" class="flex flex-wrap items-center gap-1.5 mb-4">
-            <button type="button" onclick="window.setCategoryFilter('All')" data-cat="All" class="cat-pill px-3 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white">All</button>
-            <button type="button" onclick="window.setCategoryFilter('Health')" data-cat="Health" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Health</button>
-            <button type="button" onclick="window.setCategoryFilter('Mind')" data-cat="Mind" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Mind</button>
-            <button type="button" onclick="window.setCategoryFilter('Work')" data-cat="Work" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Work</button>
-            <button type="button" onclick="window.setCategoryFilter('Fitness')" data-cat="Fitness" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Fitness</button>
+          <div class="flex items-center gap-1.5">
+            <button type="button" onclick="window.shiftWeek(-1)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+              ◀ Prev Week
+            </button>
+            <button type="button" onclick="window.jumpToToday()" class="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-xs text-indigo-300 border border-indigo-500/30 transition">
+              This Week
+            </button>
+            <button type="button" onclick="window.shiftWeek(1)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+              Next Week ▶
+            </button>
           </div>
-
-          <!-- Matrix Table or Empty Clean Slate -->
-          <div id="matrixContainer" class="overflow-x-auto custom-scroll"></div>
         </div>
+
+        <!-- Category Filter Pills -->
+        <div class="flex flex-wrap items-center gap-1.5 mb-4">
+          <button type="button" onclick="window.setCategoryFilter('All')" data-cat="All" class="cat-pill px-3 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white">All</button>
+          <button type="button" onclick="window.setCategoryFilter('Health')" data-cat="Health" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Health</button>
+          <button type="button" onclick="window.setCategoryFilter('Mind')" data-cat="Mind" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Mind</button>
+          <button type="button" onclick="window.setCategoryFilter('Work')" data-cat="Work" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Work</button>
+          <button type="button" onclick="window.setCategoryFilter('Fitness')" data-cat="Fitness" class="cat-pill px-3 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">Fitness</button>
+        </div>
+
+        <div id="matrixContainer" class="overflow-x-auto custom-scroll"></div>
       </section>
 
       <!-- RIGHT 5 COLS: SPECIFIC DATE INSPECTOR + WEEKLY CHART + LEADERBOARD -->
@@ -302,10 +304,7 @@
             </div>
           </div>
 
-          <!-- Date Lock Notice Banner -->
           <div id="inspectorLockNotice" class="hidden mt-3 p-2.5 rounded-xl bg-sky-950/60 border border-sky-700/50 text-xs text-sky-200"></div>
-
-          <!-- Habits Checklist for Selected Date -->
           <div id="inspectorHabitsList" class="mt-3 space-y-2 max-h-64 overflow-y-auto custom-scroll pr-1"></div>
         </div>
 
@@ -317,20 +316,10 @@
               <p class="text-xs text-slate-400">Click any day bar to inspect that date</p>
             </div>
             <div class="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
-              <button
-                type="button"
-                id="btnChartBar"
-                onclick="window.setChartMode('bar')"
-                class="px-2.5 py-1 rounded-md bg-indigo-600 text-white font-medium transition"
-              >
+              <button type="button" id="btnChartBar" onclick="window.setChartMode('bar')" class="px-2.5 py-1 rounded-md bg-indigo-600 text-white font-medium transition">
                 Bars
               </button>
-              <button
-                type="button"
-                id="btnChartLine"
-                onclick="window.setChartMode('line')"
-                class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white font-medium transition"
-              >
+              <button type="button" id="btnChartLine" onclick="window.setChartMode('line')" class="px-2.5 py-1 rounded-md text-slate-300 hover:text-white font-medium transition">
                 Curve
               </button>
             </div>
@@ -366,11 +355,11 @@
       <span class="text-base">➕</span>
       <span>Add Habit</span>
     </button>
-    <button type="button" id="mobNavReset" onclick="window.openResetModal()" class="flex flex-col items-center text-[11px] text-rose-300 hover:text-rose-200 py-1 px-2">
+    <button type="button" onclick="window.openModalById('resetModal')" class="flex flex-col items-center text-[11px] text-rose-300 hover:text-rose-200 py-1 px-2">
       <span class="text-base">🧹</span>
       <span>Clear Data</span>
     </button>
-    <button type="button" id="mobNavInstall" onclick="window.openInstallModal()" class="flex flex-col items-center text-[11px] text-emerald-300 hover:text-emerald-200 py-1 px-2">
+    <button type="button" onclick="window.openAppSetupModal()" class="flex flex-col items-center text-[11px] text-emerald-300 hover:text-emerald-200 py-1 px-2">
       <span class="text-base">📱</span>
       <span>App Setup</span>
     </button>
@@ -379,11 +368,11 @@
   <!-- ================================================================= -->
   <!-- MODAL 1: ADD / CUSTOMIZE HABIT MODAL                              -->
   <!-- ================================================================= -->
-  <div id="habitModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="habitModal" class="modal-backdrop" onclick="if(event.target===this) window.closeAllModals()">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 id="habitModalTitle" class="text-base font-bold text-white">Customize Habit</h3>
-        <button type="button" onclick="window.closeHabitModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button type="button" onclick="window.closeAllModals()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <input type="hidden" id="habitIdInput" />
@@ -412,10 +401,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Category</label>
-            <select
-              id="habitCategoryInput"
-              class="w-full px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
-            >
+            <select id="habitCategoryInput" class="w-full px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500">
               <option value="Health">Health</option>
               <option value="Mind">Mind</option>
               <option value="Work">Work</option>
@@ -424,10 +410,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Weekly Goal</label>
-            <select
-              id="habitTargetInput"
-              class="w-full px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500"
-            >
+            <select id="habitTargetInput" class="w-full px-2.5 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-indigo-500">
               <option value="7">7 days / wk</option>
               <option value="6">6 days / wk</option>
               <option value="5">5 days / wk</option>
@@ -439,7 +422,6 @@
           </div>
         </div>
 
-        <!-- Quick Emoji Picker -->
         <div>
           <span class="block text-[11px] text-slate-400 mb-1">Quick Icons:</span>
           <div class="flex flex-wrap gap-1.5">
@@ -457,51 +439,22 @@
         <div class="grid grid-cols-2 gap-3 pt-1">
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">Prior Streak Carry-Over</label>
-            <input
-              type="number"
-              id="habitPriorStreakInput"
-              min="0"
-              value="0"
-              class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white"
-            />
+            <input type="number" id="habitPriorStreakInput" min="0" value="0" class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-300 mb-1">All-Time Best Record</label>
-            <input
-              type="number"
-              id="habitBestStreakInput"
-              min="0"
-              value="0"
-              class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white"
-            />
+            <input type="number" id="habitBestStreakInput" min="0" value="0" class="w-full px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white" />
           </div>
         </div>
       </div>
 
       <div class="flex items-center justify-between pt-3 border-t border-slate-800">
-        <button
-          type="button"
-          id="btnDeleteHabit"
-          onclick="window.deleteCurrentHabit()"
-          class="hidden px-3 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 text-xs font-semibold"
-        >
+        <button type="button" id="btnDeleteHabit" onclick="window.deleteCurrentHabit()" class="hidden px-3 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 text-xs font-semibold">
           🗑️ Delete Habit
         </button>
         <div class="flex items-center gap-2 ml-auto">
-          <button
-            type="button"
-            onclick="window.closeHabitModal()"
-            class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onclick="window.saveHabitModal()"
-            class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white"
-          >
-            Save Habit
-          </button>
+          <button type="button" onclick="window.closeAllModals()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300">Cancel</button>
+          <button type="button" onclick="window.saveHabitModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white">Save Habit</button>
         </div>
       </div>
     </div>
@@ -510,30 +463,22 @@
   <!-- ================================================================= -->
   <!-- MODAL 2: BACKUP / EXPORT / IMPORT MODAL                           -->
   <!-- ================================================================= -->
-  <div id="dataModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="dataModal" class="modal-backdrop" onclick="if(event.target===this) window.closeAllModals()">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-white">💾 Backup, Export &amp; Import Data</h3>
-        <button type="button" onclick="window.closeDataModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button type="button" onclick="window.closeAllModals()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <div class="space-y-3">
         <div class="p-3.5 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
           <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-300">1. Export Your Data</h4>
-          <p class="text-xs text-slate-300">Download a complete JSON backup file or an Excel-compatible CSV spreadsheet of your history.</p>
+          <p class="text-xs text-slate-300">Download a complete JSON backup file or an Excel-compatible CSV spreadsheet.</p>
           <div class="flex flex-wrap gap-2 pt-1">
-            <button
-              type="button"
-              onclick="window.exportJsonBackup()"
-              class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white"
-            >
+            <button type="button" onclick="window.exportJsonBackup()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white">
               ⬇️ Download JSON Backup
             </button>
-            <button
-              type="button"
-              onclick="window.exportCsvSheet()"
-              class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white"
-            >
+            <button type="button" onclick="window.exportCsvSheet()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white">
               📊 Export Excel CSV
             </button>
           </div>
@@ -554,18 +499,14 @@
             placeholder="Or paste raw JSON backup content here..."
             class="w-full mt-2 p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 font-mono"
           ></textarea>
-          <button
-            type="button"
-            onclick="window.importFromTextarea()"
-            class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white"
-          >
+          <button type="button" onclick="window.importFromTextarea()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white">
             ⬆️ Restore Pasted JSON
           </button>
         </div>
       </div>
 
       <div class="flex justify-end pt-2 border-t border-slate-800">
-        <button type="button" onclick="window.closeDataModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
+        <button type="button" onclick="window.closeAllModals()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
       </div>
     </div>
   </div>
@@ -573,11 +514,11 @@
   <!-- ================================================================= -->
   <!-- MODAL 3: CLEAR DATA & RESET MANAGER MODAL                         -->
   <!-- ================================================================= -->
-  <div id="resetModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="resetModal" class="modal-backdrop" onclick="if(event.target===this) window.closeAllModals()">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h3 class="text-base font-bold text-white">🧹 Clear Data &amp; Clean Slate Manager</h3>
-        <button type="button" onclick="window.closeResetModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <button type="button" onclick="window.closeAllModals()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
       <p class="text-xs text-slate-300">
@@ -585,93 +526,67 @@
       </p>
 
       <div class="space-y-2.5">
-        <!-- Option 1: Clear check-in history only -->
-        <button
-          type="button"
-          onclick="window.clearLogsOnly()"
-          class="w-full text-left p-3.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/60 border border-amber-700/50 transition"
-        >
+        <button type="button" onclick="window.clearLogsOnly()" class="w-full text-left p-3.5 rounded-xl bg-amber-950/50 hover:bg-amber-900/60 border border-amber-700/50 transition">
           <div class="text-xs font-bold text-amber-200">1. Clear Check-In History Only (Keep My Habits)</div>
           <div class="text-[11px] text-amber-300/80 mt-0.5">Keeps your custom habit names &amp; targets, but resets all logged dates and streaks to 0.</div>
         </button>
 
-        <!-- Option 2: Full Factory Reset -->
-        <button
-          type="button"
-          onclick="window.wipeAllData()"
-          class="w-full text-left p-3.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-700/60 transition"
-        >
+        <button type="button" onclick="window.wipeAllData()" class="w-full text-left p-3.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/70 border border-rose-700/60 transition">
           <div class="text-xs font-bold text-rose-200">2. Wipe All Habits &amp; All Data (100% Clean Slate)</div>
           <div class="text-[11px] text-rose-300/80 mt-0.5">Deletes every habit and all check-in logs so your app starts completely empty.</div>
         </button>
 
-        <!-- Option 3: Load Demo Habits -->
-        <button
-          type="button"
-          onclick="window.loadSampleDemoData()"
-          class="w-full text-left p-3.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-700/50 transition"
-        >
-          <div class="text-xs font-bold text-indigo-200">3. Load 5 Sample Demo Habits (Test Charts)</div>
-          <div class="text-[11px] text-indigo-300/80 mt-0.5">Populates 5 sample habits with 15-day history so you can test the streaks and charts.</div>
+        <button type="button" onclick="window.loadSampleDemoData()" class="w-full text-left p-3.5 rounded-xl bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-700/50 transition">
+          <div class="text-xs font-bold text-indigo-200">3. Load 3 Sample Demo Habits (Test Charts)</div>
+          <div class="text-[11px] text-indigo-300/80 mt-0.5">Populates sample habits with recent check-ins so you can test the streaks and charts.</div>
         </button>
       </div>
 
       <div class="flex justify-end pt-2 border-t border-slate-800">
-        <button type="button" onclick="window.closeResetModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
+        <button type="button" onclick="window.closeAllModals()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
       </div>
     </div>
   </div>
 
   <!-- ================================================================= -->
-  <!-- MODAL 4: STANDALONE MOBILE APP SETUP & ICON FIX MODAL             -->
+  <!-- MODAL 4: ZERO-DOWNLOAD APP SETUP MODAL                            -->
   <!-- ================================================================= -->
-  <div id="installModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="installModal" class="modal-backdrop" onclick="if(event.target===this) window.closeAllModals()">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white">📱 Standalone Mobile App &amp; Icon Setup</h3>
-        <button type="button" onclick="window.closeInstallModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <h3 class="text-base font-bold text-white">📱 Single-File Mobile App Setup (No Extra Files Needed!)</h3>
+        <button type="button" onclick="window.closeAllModals()" class="text-slate-400 hover:text-white text-lg">✕</button>
       </div>
 
-      <!-- Live Diagnostic Box -->
-      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1.5 text-xs">
-        <div class="font-bold text-slate-200">🔍 Live App Mode Status:</div>
-        <div id="pwaDisplayModeStatus" class="text-emerald-300 font-medium">Checking display mode...</div>
-      </div>
-
-      <!-- Fix for Chrome Badge & GitHub Pages WebAPK -->
-      <div class="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-700/50 space-y-2.5 text-xs">
-        <h4 class="font-bold text-indigo-200">✨ How to Get a True App Icon (No Chrome Shortcut Badge)</h4>
+      <!-- Status & Built-In Fullscreen Option -->
+      <div class="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-700/50 space-y-2 text-xs">
+        <div class="font-bold text-emerald-200">✅ Option 1: Built-In Single-File Embedded Mode (Active Now)</div>
         <p class="text-slate-300 leading-relaxed">
-          Android Chrome removes the small Chrome badge and builds a real <strong>WebAPK</strong> when your GitHub Pages repository has <code>manifest.json</code> and <code>sw.js</code> in the same folder as <code>index.html</code>:
+          This <code>index.html</code> file now automatically generates its own <strong>512×512 PNG App Icon</strong> and injects an <strong>Embedded Data-URI Manifest</strong> into the page memory automatically—<strong>you do NOT need to download any extra files!</strong>
         </p>
-        <div class="flex flex-wrap gap-2 pt-1">
+        <div class="pt-1 flex flex-wrap gap-2">
           <button
             type="button"
-            onclick="window.downloadBothPwaFiles()"
-            class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition"
+            onclick="window.toggleFullscreenMode(); window.closeAllModals();"
+            class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition"
           >
-            ⬇️ Download manifest.json + sw.js
-          </button>
-          <button
-            type="button"
-            onclick="window.downloadAppIconPng()"
-            class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition"
-          >
-            🖼️ Download 512×512 App Icon PNG
+            ⛶ Launch Fullscreen App View Now
           </button>
         </div>
       </div>
 
-      <!-- Why Android Showed "Already Installed" -->
-      <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-700/40 space-y-1.5 text-xs">
-        <h4 class="font-bold text-amber-200">⚠️ Why Android Says "Already Installed"</h4>
-        <p class="text-slate-300 leading-relaxed">
-          If you previously tapped <em>"Add to Home screen"</em>, Android keeps that shortcut inside your phone's <strong>App Drawer (All Apps list)</strong> even if you removed it from your main screen. Swipe up to open your phone's App Drawer, search for <strong>PulseHabit</strong>, press and hold it, and tap <strong>Uninstall / Remove</strong> before installing again.
-        </p>
+      <!-- Browser Options without downloading manifest -->
+      <div class="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2 text-xs">
+        <h4 class="font-bold text-indigo-300">📲 Option 2: Add to Home Screen from Single File</h4>
+        <ul class="list-disc pl-4 space-y-1.5 text-slate-300">
+          <li><strong>iPhone (Safari):</strong> Tap <strong>Share (↑) → Add to Home Screen</strong>. Safari reads the embedded PNG icon directly from this single <code>index.html</code> file with zero badge!</li>
+          <li><strong>Android (Samsung Internet / Firefox / Brave):</strong> Open your link and tap <strong>Add page to → Home screen</strong> for a clean home-screen icon from a single file.</li>
+          <li><strong>Android (Chrome):</strong> If Chrome says <em>"Already Installed"</em>, open your phone's <strong>App Drawer (swipe up from home screen)</strong>, search for <strong>PulseHabit</strong>, long-press it, and tap <strong>Uninstall / Remove</strong> to clear the old cached shortcut.</li>
+        </ul>
       </div>
 
       <div class="flex justify-end pt-2 border-t border-slate-800">
-        <button type="button" onclick="window.closeInstallModal()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
+        <button type="button" onclick="window.closeAllModals()" class="px-4 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300">Close</button>
       </div>
     </div>
   </div>
@@ -686,7 +601,6 @@
     const STORAGE_KEY = 'pulsehabit_clean_v2';
     const EDIT_WINDOW_DAYS = 15; // Today + 14 days back = 15 days total
 
-    let deferredInstallPrompt = null;
     let state = {
       habits: [],
       selectedDate: '',
@@ -694,6 +608,108 @@
       categoryFilter: 'All',
       chartMode: 'bar'
     };
+
+    // --- BULLETPROOF MODAL CONTROLLER ---
+    window.closeAllModals = function() {
+      document.querySelectorAll('.modal-backdrop').forEach(el => {
+        el.classList.remove('open');
+      });
+    };
+
+    window.openModalById = function(modalId) {
+      window.closeAllModals();
+      const target = document.getElementById(modalId);
+      if (target) {
+        target.classList.add('open');
+      }
+    };
+
+    window.openAppSetupModal = function() {
+      window.openModalById('installModal');
+    };
+
+    // --- BUILT-IN FULLSCREEN APP MODE (NO INSTALL REQUIRED) ---
+    window.toggleFullscreenMode = function() {
+      const docEl = document.documentElement;
+      const btnText = document.getElementById('fullscreenBtnText');
+      if (!document.fullscreenElement) {
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().then(() => {
+            if (btnText) btnText.textContent = 'Exit Fullscreen';
+          }).catch(() => {
+            showToast('Fullscreen is handled by your browser menu.');
+          });
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().then(() => {
+            if (btnText) btnText.textContent = 'Fullscreen';
+          });
+        }
+      }
+    };
+
+    // --- AUTO-EMBED 512x512 PNG ICON & MANIFEST INSIDE SINGLE FILE ---
+    function injectSingleFilePwaAssets() {
+      try {
+        const size = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // App icon background
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.roundRect(0, 0, size, size, 115);
+        ctx.fill();
+
+        // Subtle border glow
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 14;
+        ctx.strokeRect(28, 28, size - 56, size - 56);
+
+        // Pulse line
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 40;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(105, 275);
+        ctx.lineTo(185, 275);
+        ctx.lineTo(230, 155);
+        ctx.lineTo(288, 355);
+        ctx.lineTo(330, 245);
+        ctx.lineTo(405, 245);
+        ctx.stroke();
+
+        const pngDataUrl = canvas.toDataURL('image/png');
+
+        // Apply PNG directly to <link> tags
+        const fav = document.getElementById('dynamicFavicon');
+        const apple = document.getElementById('dynamicAppleIcon');
+        if (fav) { fav.type = 'image/png'; fav.href = pngDataUrl; }
+        if (apple) { apple.href = pngDataUrl; }
+
+        // Build inline single-file manifest with embedded PNG
+        const inlineManifest = {
+          name: 'PulseHabit — Daily Habit Tracker',
+          short_name: 'PulseHabit',
+          start_url: window.location.href,
+          display: 'standalone',
+          background_color: '#0b1120',
+          theme_color: '#0f172a',
+          icons: [
+            { src: pngDataUrl, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ]
+        };
+        const manifestDataUri = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(inlineManifest));
+        const manLink = document.getElementById('dynamicManifest');
+        if (manLink) manLink.href = manifestDataUri;
+      } catch (e) {
+        console.warn('Single-file icon generation skipped:', e);
+      }
+    }
 
     // --- DATE HELPERS (LOCAL YYYY-MM-DD) ---
     function toLocalIso(dateObj) {
@@ -721,7 +737,7 @@
 
     function getMondayOfIso(isoStr) {
       const dt = parseLocalIso(isoStr);
-      const day = dt.getDay(); // 0 = Sun, 1 = Mon
+      const day = dt.getDay();
       const diff = day === 0 ? -6 : 1 - day;
       dt.setDate(dt.getDate() + diff);
       return toLocalIso(dt);
@@ -733,7 +749,6 @@
       return Math.round((today - target) / (1000 * 60 * 60 * 24));
     }
 
-    // Returns: 'editable' (0..14 days ago), 'frozen' (>=15 days ago), or 'future' (<0 days ago)
     function getDateEditStatus(isoStr) {
       const diff = diffDaysFromToday(isoStr);
       if (diff < 0) return 'future';
@@ -794,7 +809,6 @@
       const logs = habit.logs || {};
       const today = getTodayIso();
 
-      // Active current streak (counting back from today or yesterday)
       let current = 0;
       let cursor = logs[today] ? today : addDaysIso(today, -1);
       while (logs[cursor]) {
@@ -803,7 +817,6 @@
       }
       current += Number(habit.priorStreak || 0);
 
-      // Best streak across all logged dates
       const checkedDates = Object.keys(logs).filter(k => logs[k]).sort();
       let maxRun = 0;
       let run = 0;
@@ -958,7 +971,6 @@
       document.getElementById('kpiSelectedDateCompletion').textContent = `${doneOnSelected} / ${totalHabits}`;
       document.getElementById('kpiSelectedDateSub').textContent = `${formatFullDate(selIso)}`;
 
-      // Weekly rate
       let weekChecks = 0;
       for (let i = 0; i < 7; i++) {
         const dIso = addDaysIso(state.weekStartMonday, i);
@@ -971,7 +983,6 @@
       document.getElementById('kpiWeeklyRate').textContent = `${rate}%`;
       document.getElementById('kpiWeeklySub').textContent = `${weekChecks} of ${maxWeekChecks} possible this week`;
 
-      // Streaks
       let topCurrent = 0, topCurrentName = 'No active streaks yet';
       let topBest = 0, topBestName = 'No records yet';
 
@@ -998,7 +1009,6 @@
       const today = getTodayIso();
       let html = '';
 
-      // Show last 20 days + Today (21 days total) so user sees both frozen (>14d) and editable (0..14d)
       for (let offset = 20; offset >= 0; offset--) {
         const iso = addDaysIso(today, -offset);
         const dt = parseLocalIso(iso);
@@ -1125,22 +1135,16 @@
         rowsHtml += `
           <tr class="border-t border-slate-800/80 hover:bg-slate-800/30 transition">
             <td class="py-2.5 pr-3">
-              <div class="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onclick="window.openHabitModal('${h.id}')"
-                  class="text-left group flex items-center gap-2.5"
-                >
-                  <span class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-base">${h.emoji || '⚡'}</span>
-                  <div>
-                    <div class="text-xs font-bold text-white group-hover:text-indigo-300 transition flex items-center gap-1.5">
-                      <span>${h.name}</span>
-                      <span class="text-[10px] text-slate-400 font-normal">✏️</span>
-                    </div>
-                    <div class="text-[11px] text-slate-400">${h.category} • Goal: ${weekCount}/${target}d (${pct}%)</div>
+              <button type="button" onclick="window.openHabitModal('${h.id}')" class="text-left group flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-base">${h.emoji || '⚡'}</span>
+                <div>
+                  <div class="text-xs font-bold text-white group-hover:text-indigo-300 transition flex items-center gap-1.5">
+                    <span>${h.name}</span>
+                    <span class="text-[10px] text-slate-400 font-normal">✏️</span>
                   </div>
-                </button>
-              </div>
+                  <div class="text-[11px] text-slate-400">${h.category} • Goal: ${weekCount}/${target}d (${pct}%)</div>
+                </div>
+              </button>
             </td>
             ${dayCells}
             <td class="pl-2 text-right whitespace-nowrap">
@@ -1279,7 +1283,6 @@
           </div>
         `;
       } else {
-        // SVG Trend Curve
         const w = 320, h = 130, padX = 24, padY = 18;
         const coords = points.map((p, idx) => {
           const x = padX + (idx * ((w - padX * 2) / 6));
@@ -1339,7 +1342,6 @@
 
     // --- HABIT MODAL FUNCTIONS ---
     window.openHabitModal = function(habitId) {
-      const modal = document.getElementById('habitModal');
       const title = document.getElementById('habitModalTitle');
       const delBtn = document.getElementById('btnDeleteHabit');
 
@@ -1366,11 +1368,7 @@
         document.getElementById('habitBestStreakInput').value = 0;
         delBtn.classList.add('hidden');
       }
-      modal.classList.remove('hidden');
-    };
-
-    window.closeHabitModal = function() {
-      document.getElementById('habitModal').classList.add('hidden');
+      window.openModalById('habitModal');
     };
 
     window.saveHabitModal = function() {
@@ -1410,7 +1408,7 @@
       }
 
       saveState();
-      window.closeHabitModal();
+      window.closeAllModals();
       renderAll();
       showToast('✓ Habit saved!');
     };
@@ -1420,20 +1418,12 @@
       if (!id) return;
       state.habits = state.habits.filter(h => h.id !== id);
       saveState();
-      window.closeHabitModal();
+      window.closeAllModals();
       renderAll();
       showToast('🗑️ Habit deleted.');
     };
 
-    // --- BACKUP / EXPORT / IMPORT MODAL FUNCTIONS ---
-    window.openDataModal = function() {
-      document.getElementById('dataModal').classList.remove('hidden');
-    };
-
-    window.closeDataModal = function() {
-      document.getElementById('dataModal').classList.add('hidden');
-    };
-
+    // --- BACKUP / EXPORT / IMPORT ---
     window.exportJsonBackup = function() {
       const payload = JSON.stringify({ exportedAt: new Date().toISOString(), habits: state.habits }, null, 2);
       const blob = new Blob([payload], { type: 'application/json' });
@@ -1480,7 +1470,7 @@
             state.habits = parsed.habits;
             saveState();
             renderAll();
-            window.closeDataModal();
+            window.closeAllModals();
             showToast('✓ Backup restored successfully!');
           }
         } catch (err) {
@@ -1499,7 +1489,7 @@
           state.habits = parsed.habits;
           saveState();
           renderAll();
-          window.closeDataModal();
+          window.closeAllModals();
           showToast('✓ Backup restored successfully!');
         }
       } catch (e) {
@@ -1507,15 +1497,7 @@
       }
     };
 
-    // --- CLEAR DATA & RESET MODAL FUNCTIONS ---
-    window.openResetModal = function() {
-      document.getElementById('resetModal').classList.remove('hidden');
-    };
-
-    window.closeResetModal = function() {
-      document.getElementById('resetModal').classList.add('hidden');
-    };
-
+    // --- RESET / CLEAR DATA ACTIONS ---
     window.clearLogsOnly = function() {
       state.habits.forEach(h => {
         h.logs = {};
@@ -1523,7 +1505,7 @@
         h.bestStreak = 0;
       });
       saveState();
-      window.closeResetModal();
+      window.closeAllModals();
       renderAll();
       showToast('🧹 Check-in logs cleared! Your habits were kept.');
     };
@@ -1532,7 +1514,7 @@
       state.habits = [];
       localStorage.removeItem(STORAGE_KEY);
       saveState();
-      window.closeResetModal();
+      window.closeAllModals();
       renderAll();
       showToast('✨ All habits & logs wiped! Clean slate active.');
     };
@@ -1584,107 +1566,14 @@
         }
       ];
       saveState();
-      window.closeResetModal();
+      window.closeAllModals();
       renderAll();
       showToast('⚡ Sample habits loaded!');
     };
 
-    // --- APP SETUP (PWA) MODAL & FILE GENERATORS ---
-    window.openInstallModal = function() {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      const statusEl = document.getElementById('pwaDisplayModeStatus');
-      if (statusEl) {
-        statusEl.textContent = isStandalone
-          ? '✅ Running in Standalone Full-Screen App Mode'
-          : '🌐 Currently in Browser Tab Mode (Not Installed Yet)';
-      }
-      document.getElementById('installModal').classList.remove('hidden');
-    };
-
-    window.closeInstallModal = function() {
-      document.getElementById('installModal').classList.add('hidden');
-    };
-
-    function createIconCanvas(size) {
-      const canvas = document.createElement('canvas');
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.roundRect(0, 0, size, size, size * 0.22);
-      ctx.fill();
-
-      ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = size * 0.08;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(size * 0.2, size * 0.55);
-      ctx.lineTo(size * 0.36, size * 0.55);
-      ctx.lineTo(size * 0.45, size * 0.3);
-      ctx.lineTo(size * 0.57, size * 0.7);
-      ctx.lineTo(size * 0.66, size * 0.48);
-      ctx.lineTo(size * 0.8, size * 0.48);
-      ctx.stroke();
-
-      return canvas;
-    }
-
-    window.downloadAppIconPng = function() {
-      const canvas = createIconCanvas(512);
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'icon-512.png';
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('🖼️ Downloaded icon-512.png!');
-      }, 'image/png');
-    };
-
-    window.downloadBothPwaFiles = function() {
-      const manifestObj = {
-        name: 'PulseHabit — Daily Habit Tracker',
-        short_name: 'PulseHabit',
-        start_url: './index.html',
-        display: 'standalone',
-        background_color: '#0b1120',
-        theme_color: '#0f172a',
-        icons: [
-          {
-            src: './icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
-      };
-
-      const blob1 = new Blob([JSON.stringify(manifestObj, null, 2)], { type: 'application/json' });
-      const url1 = URL.createObjectURL(blob1);
-      const a1 = document.createElement('a');
-      a1.href = url1;
-      a1.download = 'manifest.json';
-      a1.click();
-      URL.revokeObjectURL(url1);
-
-      const swCode = `self.addEventListener('install', e => self.skipWaiting());\nself.addEventListener('activate', e => e.waitUntil(self.clients.claim()));\nself.addEventListener('fetch', e => {});\n`;
-      const blob2 = new Blob([swCode], { type: 'application/javascript' });
-      const url2 = URL.createObjectURL(blob2);
-      const a2 = document.createElement('a');
-      a2.href = url2;
-      a2.download = 'sw.js';
-      a2.click();
-      URL.revokeObjectURL(url2);
-
-      showToast('⬇️ Downloaded manifest.json and sw.js!');
-    };
-
     // Initialize on page load
     window.addEventListener('DOMContentLoaded', () => {
+      injectSingleFilePwaAssets();
       loadState();
       renderAll();
     });
