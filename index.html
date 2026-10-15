@@ -11,10 +11,10 @@
     <meta name="theme-color" content="#0B0F17" id="themeColorMeta">
     <title>PulseHabit | Standalone Habit & Streak PWA</title>
 
-    <!-- Static Pre-Encoded SVG Icons & Standalone Web Manifest (Parsed by Android Chrome & iOS Safari BEFORE JS runs) -->
+    <!-- Physical manifest.json link first for true Android Chrome WebAPK support on GitHub Pages, with JS fallback -->
     <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='50%25' stop-color='%234f46e5'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23g)'/%3E%3Cpath d='M148 272l72 72 148-156' fill='none' stroke='%23ffffff' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='388' cy='132' r='44' fill='%23f59e0b'/%3E%3C/svg%3E">
     <link id="dynamicAppleIcon" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2310b981'/%3E%3Cstop offset='50%25' stop-color='%234f46e5'/%3E%3Cstop offset='100%25' stop-color='%237c3aed'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url(%23g)'/%3E%3Cpath d='M148 272l72 72 148-156' fill='none' stroke='%23ffffff' stroke-width='48' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='388' cy='132' r='44' fill='%23f59e0b'/%3E%3C/svg%3E">
-    <link id="dynamicManifest" rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22PulseHabit%20%7C%20Daily%20Habit%20%26%20Streak%20Tracker%22%2C%22short_name%22%3A%22PulseHabit%22%2C%22description%22%3A%22Standalone%20habit%20tracker%20with%2015-day%20editable%20window%20and%20streak%20charts.%22%2C%22start_url%22%3A%22.%2F%22%2C%22scope%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22background_color%22%3A%22%230B0F17%22%2C%22theme_color%22%3A%22%230B0F17%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%2520viewBox%3D%270%25200%2520512%2520512%27%253E%253Cdefs%253E%253ClinearGradient%2520id%3D%27g%27%2520x1%3D%270%2525%27%2520y1%3D%270%2525%27%2520x2%3D%27100%2525%27%2520y2%3D%27100%2525%27%253E%253Cstop%2520offset%3D%270%2525%27%2520stop-color%3D%27%252310b981%27%2F%253E%253Cstop%2520offset%3D%2750%2525%27%2520stop-color%3D%27%25234f46e5%27%2F%253E%253Cstop%2520offset%3D%27100%2525%27%2520stop-color%3D%27%25237c3aed%27%2F%253E%253C%2FlinearGradient%253E%253C%2Fdefs%253E%253Crect%2520width%3D%27512%27%2520height%3D%27512%27%2520rx%3D%27115%27%2520fill%3D%27url(%2523g)%27%2F%253E%253Cpath%2520d%3D%27M148%2520272l72%252072%2520148-156%27%2520fill%3D%27none%27%2520stroke%3D%27%2523ffffff%27%2520stroke-width%3D%2748%27%2520stroke-linecap%3D%27round%27%2520stroke-linejoin%3D%27round%27%2F%253E%253Ccircle%2520cx%3D%27388%27%2520cy%3D%27132%27%2520r%3D%2744%27%2520fill%3D%27%2523f59e0b%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D">
+    <link id="dynamicManifest" rel="manifest" href="./manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -110,9 +110,9 @@
             <!-- Action Controls -->
             <div class="flex items-center gap-1.5 sm:gap-2">
                 <!-- Install / Mobile App Guide Button -->
-                <button onclick="openPwaModal()" id="topInstallBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 transition" title="Install on Android or iPhone">
+                <button onclick="openInstallModal()" id="btnOpenInstallModal" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 transition" title="App Setup & Install Guide">
                     <i class="ph-bold ph-device-mobile-speaker text-base"></i>
-                    <span id="topInstallBtnText" class="hidden sm:inline">App Icon & Setup</span>
+                    <span id="topInstallBtnText" class="hidden sm:inline">App Setup</span>
                 </button>
 
                 <!-- Backup / Export / Import Modal Trigger -->
@@ -332,6 +332,10 @@
                             <i class="ph-bold ph-upload-simple text-indigo-500 text-base"></i>
                             <span>Import JSON Backup</span>
                         </button>
+                        <button onclick="openInstallModal()" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-4 py-3 rounded-xl transition">
+                            <i class="ph-bold ph-device-mobile-speaker text-base"></i>
+                            <span>App Setup Guide</span>
+                        </button>
                     </div>
                     <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/70 max-w-xs mx-auto flex items-center justify-center gap-3">
                         <button onclick="loadSampleDemoHabits()" class="text-[11px] font-semibold text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 underline underline-offset-4 transition">
@@ -449,7 +453,7 @@
                 <i class="ph-bold ph-database text-xl"></i>
                 <span class="text-[10px]">Backup</span>
             </button>
-            <button onclick="openPwaModal()" id="mnav-pwa" class="flex flex-col items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+            <button onclick="openInstallModal()" id="mobNavInstall" class="flex flex-col items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                 <i class="ph-bold ph-device-mobile-speaker text-xl"></i>
                 <span class="text-[10px]">App Setup</span>
             </button>
@@ -660,127 +664,127 @@
 
             <div class="space-y-3">
                 <!-- Option A: Clear Check-in History Only -->
-                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                        <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                            <i class="ph-bold ph-calendar-x text-amber-500"></i>
-                            <span>1. Clear Check-In History Only</span>
-                        </h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Keeps all your created habits, icons, categories & targets, but resets all logged dates and streaks to 0.</p>
-                    </div>
-                    <button id="btnClearHistoryOnly" onclick="executeClearHistoryOnly()" disabled class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shrink-0 transition">
-                        Clear History
-                    </button>
-                </div>
-
-                <!-- Option B: 100% Factory Reset (Wipe All Habits & Legacy Storage) -->
-                <div class="p-4 rounded-xl bg-rose-500/[0.06] border border-rose-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                        <h4 class="font-bold text-xs sm:text-sm text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
-                            <i class="ph-bold ph-trash text-rose-500"></i>
-                            <span>2. Clear All Habits & All Data (Factory Reset)</span>
-                        </h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Wipes all habits, logs, and legacy browser storage keys so your dashboard is 100% empty.</p>
-                    </div>
-                    <button id="btnFactoryResetAll" onclick="executeFactoryResetAll()" disabled class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shrink-0 transition">
-                        Wipe All Data
-                    </button>
-                </div>
-
-                <!-- Option C: Optional Demo Habits Loader -->
-                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                        <h4 class="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                            <i class="ph-bold ph-magic-wand text-indigo-500"></i>
-                            <span>3. Load Sample Demo Habits (Optional)</span>
-                        </h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Populates 5 sample habits to test the 15-day editable window and frozen history.</p>
-                    </div>
-                    <button onclick="loadSampleDemoHabits(); closeResetModal();" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shrink-0 transition">
-                        Load Demo Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="pwaModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
-            <div class="flex items-center justify-between">
+    <!-- App Setup & Live PWA Diagnostic Modal (#installModal) -->
+    <div id="installModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
+            <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-3">
-                    <img id="pwaModalAppIcon" alt="PulseHabit Icon" class="w-12 h-12 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700" />
+                    <img id="pwaModalAppIcon" alt="PulseHabit Icon" class="w-12 h-12 rounded-2xl shadow-md border border-slate-200 dark:border-slate-700 shrink-0" />
                     <div>
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold text-base">True Standalone App Icon & Setup</h3>
-                            <span id="pwaModalStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">Ready</span>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-bold text-base">App Setup & WebAPK Diagnostic</h3>
+                            <span id="pwaModalStatusBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">Browser Tab Mode (Not Installed Yet)</span>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">How to get a 100% clean icon without a Chrome badge</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Fix "Already Installed" & get a clean icon without Chrome badge</p>
                     </div>
                 </div>
-                <button onclick="closePwaModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                <button onclick="closeInstallModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
                     <i class="ph-bold ph-x text-lg"></i>
                 </button>
             </div>
 
-            <!-- Native Android One-Tap Install Banner (Shown when beforeinstallprompt is available) -->
-            <div id="nativeInstallBanner" class="hidden p-4 rounded-xl bg-indigo-600 text-white flex items-center justify-between gap-3">
-                <div>
-                    <h4 class="font-bold text-sm">One-Tap Native WebAPK Install Available!</h4>
-                    <p class="text-xs text-indigo-100">Install PulseHabit with a clean icon (no Chrome badge).</p>
+            <!-- Live PWA Diagnostic Status Card -->
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-800 space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold uppercase tracking-wider text-[10px] text-slate-400">Live PWA Diagnostic Status</span>
+                    <button onclick="runPwaDiagnostics()" class="text-[11px] font-semibold text-indigo-500 hover:underline flex items-center gap-1">
+                        <i class="ph-bold ph-arrows-clockwise"></i> Recheck
+                    </button>
                 </div>
-                <button onclick="triggerNativePwaInstall()" class="px-4 py-2 rounded-xl bg-white text-indigo-600 font-bold text-xs shrink-0 shadow">
-                    Install App
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block">1. Display Mode</span>
+                        <span id="diagDisplayMode" class="font-bold text-amber-500">Browser Tab (Not Installed)</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block">2. Native Install Prompt</span>
+                        <span id="diagInstallPrompt" class="font-bold text-slate-600 dark:text-slate-300">Waiting for HTTPS + sw.js</span>
+                    </div>
+                    <div class="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800">
+                        <span class="text-[10px] text-slate-400 block">3. Service Worker</span>
+                        <span id="diagSwStatus" class="font-bold text-slate-600 dark:text-slate-300">Checking ./sw.js...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Native Android One-Tap Install Banner (Shown when beforeinstallprompt is available) -->
+            <div id="nativeInstallBanner" class="hidden p-4 rounded-xl bg-emerald-600 text-white flex items-center justify-between gap-3 shadow-lg shadow-emerald-600/20">
+                <div>
+                    <h4 class="font-bold text-sm flex items-center gap-1.5"><i class="ph-bold ph-check-circle text-lg"></i> Ready to Install (1-Tap Native WebAPK)</h4>
+                    <p class="text-xs text-emerald-100">Tap the button to install PulseHabit with a clean icon and zero Chrome badge.</p>
+                </div>
+                <button onclick="triggerNativePwaInstall()" class="px-4 py-2.5 rounded-xl bg-white text-emerald-700 font-extrabold text-xs shrink-0 shadow hover:bg-emerald-50 transition">
+                    Install App Now
                 </button>
             </div>
 
-            <!-- Why Chrome Shows a Shortcut Badge & How to Fix It -->
-            <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/25 space-y-2.5">
-                <h4 class="font-bold text-xs uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                    <i class="ph-fill ph-sparkle text-sm"></i>
-                    <span>Why does Android Chrome sometimes show a tiny Chrome badge?</span>
+            <!-- Why Chrome Said "Already Installed" & How to Clear Cached Shortcut -->
+            <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
+                <h4 class="font-bold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                    <i class="ph-fill ph-warning-circle text-base"></i>
+                    <span>Why did Chrome say "Already Installed" or show a Chrome badge earlier?</span>
                 </h4>
-                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                    Android Chrome only removes the small Chrome corner badge when it installs a <strong>WebAPK</strong> (which requires <strong>HTTPS</strong> + a physical <code class="text-indigo-500 font-mono">manifest.json</code> & <code class="text-indigo-500 font-mono">sw.js</code> file in the same folder). Also, if you previously added an older version to your Home Screen, Android caches the old shortcut icon until you remove and re-add it.
+                <p class="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                    1. <strong>Cached Android Shortcut:</strong> If you previously tapped <em>"Add to Home Screen"</em> on this URL, Android Chrome remembers that shortcut in your phone's launcher or <strong>App Drawer</strong> even if you removed it from your main screen. Open your phone's <strong>App Drawer</strong> (swipe up from home screen), search for <strong>PulseHabit</strong>, and <strong>Uninstall / Remove</strong> the old shortcut first.<br>
+                    2. <strong>Missing <code class="font-mono">manifest.json</code> & <code class="font-mono">sw.js</code> files:</strong> Android Chrome only builds a real badge-free app (WebAPK) when <code class="font-mono">manifest.json</code> and <code class="font-mono">sw.js</code> exist as real files in your GitHub Pages folder alongside <code class="font-mono">index.html</code>.
                 </p>
-                <div class="pt-1 flex flex-wrap items-center gap-2">
-                    <button onclick="downloadGitHubPagesManifest()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm transition">
-                        <i class="ph-bold ph-file-code"></i>
-                        <span>1. Download manifest.json</span>
+            </div>
+
+            <!-- 1-Click GitHub Pages WebAPK File Generator -->
+            <div class="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/25 space-y-3">
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                        <i class="ph-fill ph-sparkle text-sm"></i>
+                        <span>3-Step Fix for GitHub Pages (100% Clean Icon, No Chrome Badge)</span>
+                    </h4>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="downloadAllPwaFiles()" class="px-3.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition">
+                        <i class="ph-bold ph-download-simple text-sm"></i>
+                        <span>Download Both (manifest.json + sw.js)</span>
                     </button>
-                    <button onclick="downloadGitHubPagesServiceWorker()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-sm transition">
-                        <i class="ph-bold ph-gear-six"></i>
-                        <span>2. Download sw.js</span>
+                    <button onclick="downloadGitHubPagesManifest()" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold flex items-center gap-1 transition">
+                        <i class="ph-bold ph-file-code text-indigo-500"></i>
+                        <span>manifest.json</span>
+                    </button>
+                    <button onclick="downloadGitHubPagesServiceWorker()" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold flex items-center gap-1 transition">
+                        <i class="ph-bold ph-gear-six text-emerald-500"></i>
+                        <span>sw.js</span>
                     </button>
                 </div>
-                <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                    <strong>For GitHub Pages:</strong> Upload <code class="font-mono">index.html</code>, <code class="font-mono">manifest.json</code>, and <code class="font-mono">sw.js</code> into your repository root, delete the old shortcut from your phone's Home Screen, and tap <strong>"Install app"</strong> in Chrome!
-                </p>
+
+                <ol class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside pt-1">
+                    <li>Tap <strong>"Download Both (manifest.json + sw.js)"</strong> above (high-res 192px & 512px PNG icons are pre-embedded inside <code class="font-mono">manifest.json</code>!).</li>
+                    <li>Upload <code class="font-mono font-bold">index.html</code>, <code class="font-mono font-bold">manifest.json</code>, and <code class="font-mono font-bold">sw.js</code> to the same folder in your GitHub Pages repository.</li>
+                    <li>Wait 1 minute, open your GitHub Pages URL in Android Chrome, and tap <strong>Menu (⋮) → Install app</strong>!</li>
+                </ol>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <!-- iPhone / iPad Safari Guide -->
-                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-2">
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
                     <div class="flex items-center gap-2">
-                        <i class="ph-fill ph-apple-logo text-lg text-slate-800 dark:text-white"></i>
-                        <h4 class="font-bold text-xs uppercase tracking-wider">iPhone (Safari)</h4>
+                        <i class="ph-fill ph-apple-logo text-base text-slate-800 dark:text-white"></i>
+                        <h4 class="font-bold text-xs uppercase tracking-wider">iPhone / iPad (Safari)</h4>
                     </div>
-                    <ol class="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 list-decimal list-inside">
-                        <li>Remove any old PulseHabit icon first.</li>
-                        <li>Open in <strong>Safari</strong> and tap <strong>Share</strong> <i class="ph-bold ph-export text-indigo-500"></i>.</li>
-                        <li>Tap <strong>"Add to Home Screen"</strong> for a clean squircle icon (iOS never adds a browser badge).</li>
+                    <ol class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside">
+                        <li>Open your link in <strong>Safari</strong>.</li>
+                        <li>Tap <strong>Share</strong> <i class="ph-bold ph-export text-indigo-500"></i> at the bottom.</li>
+                        <li>Tap <strong>"Add to Home Screen"</strong> (iOS uses the embedded 512px PNG icon with zero browser badge).</li>
                     </ol>
                 </div>
 
-                <!-- Android Chrome Guide -->
-                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-2">
+                <!-- Android Chrome Reset Guide -->
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-800 space-y-1.5">
                     <div class="flex items-center gap-2">
-                        <i class="ph-fill ph-android-logo text-lg text-emerald-500"></i>
+                        <i class="ph-fill ph-android-logo text-base text-emerald-500"></i>
                         <h4 class="font-bold text-xs uppercase tracking-wider">Android (Chrome)</h4>
                     </div>
-                    <ol class="text-xs text-slate-600 dark:text-slate-300 space-y-1.5 list-decimal list-inside">
-                        <li>Delete the old shortcut from your Home Screen.</li>
-                        <li>Open your HTTPS link in <strong>Chrome</strong>.</li>
-                        <li>Tap <strong>Menu (⋮) → "Install app"</strong> (or "Add to Home screen").</li>
+                    <ol class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 list-decimal list-inside">
+                        <li>Uninstall any old PulseHabit shortcut from your <strong>App Drawer</strong>.</li>
+                        <li>Upload <code class="font-mono">manifest.json</code> & <code class="font-mono">sw.js</code> to your host.</li>
+                        <li>Refresh Chrome & tap <strong>Menu (⋮) → Install app</strong>.</li>
                     </ol>
                 </div>
             </div>
@@ -811,6 +815,20 @@
     </div>
 
     <script>
+        // ============================================================================
+        // TOP-LEVEL DECLARATIONS (Declared first to prevent any ReferenceError / TDZ)
+        // ============================================================================
+        let deferredInstallPrompt = null;
+        let swRegistrationStatus = 'Checking...';
+        let manifestModeStatus = 'Checking...';
+        let generatedIcon192 = '';
+        let generatedIcon512 = '';
+        let audioCtx = null;
+        let toastTimer = null;
+
+        const STORAGE_KEY = 'pulsehabit_clean_v1';
+        const LEGACY_KEYS = ['pulsehabit_pwa_v4', 'pulsehabit_pwa_v3', 'pulsehabit_pwa_v2', 'pulsehabit_v1'];
+
         const DAY_NAMES = [
             { short: 'Mon', full: 'Monday' },
             { short: 'Tue', full: 'Tuesday' },
@@ -928,9 +946,13 @@
             mobileTab: 'track'
         };
 
-        let deferredInstallPrompt = null;
-        let generatedIcon192 = '';
-        let generatedIcon512 = '';
+        // Strict check: ONLY true when genuinely running inside an installed standalone PWA window
+        function isCurrentlyStandalone() {
+            return Boolean(
+                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+                window.navigator.standalone === true
+            );
+        }
 
         // Renders crisp 192x192 & 512x512 PNG icons on an offscreen canvas (Emerald-to-Indigo squircle + Checkmark + Flame badge)
         function generateAppIconPng(size) {
@@ -990,7 +1012,112 @@
             return canvas.toDataURL('image/png');
         }
 
-        function setupStandalonePWA() {
+        function buildManifestObject(useDataUriStartUrl) {
+            const icon192 = generatedIcon192 || generateAppIconPng(192);
+            const icon512 = generatedIcon512 || generateAppIconPng(512);
+            return {
+                id: './',
+                name: 'PulseHabit | Daily Habit & Streak Tracker',
+                short_name: 'PulseHabit',
+                description: 'Standalone habit tracker with 15-day editable window and streak charts.',
+                start_url: useDataUriStartUrl ? window.location.href.split('#')[0] : './index.html',
+                scope: './',
+                display: 'standalone',
+                orientation: 'portrait-primary',
+                background_color: '#0B0F17',
+                theme_color: '#0B0F17',
+                icons: [
+                    { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+                    { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+                    { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+                    { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+                ]
+            };
+        }
+
+        function updateInstallButtonsUI() {
+            const standalone = isCurrentlyStandalone();
+            const headerBadge = document.getElementById('pwaModeBadge');
+            const modalBadge = document.getElementById('pwaModalStatusBadge');
+            const topBtnText = document.getElementById('topInstallBtnText');
+            const nativeBanner = document.getElementById('nativeInstallBanner');
+
+            if (standalone) {
+                if (headerBadge) {
+                    headerBadge.textContent = 'Standalone App Active';
+                    headerBadge.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+                }
+                if (modalBadge) {
+                    modalBadge.textContent = 'Running as Installed App';
+                    modalBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+                }
+                if (topBtnText) topBtnText.textContent = 'App Info';
+                if (nativeBanner) nativeBanner.classList.add('hidden');
+            } else {
+                // In Browser Tab Mode: NEVER falsely claim "Already Installed"!
+                if (headerBadge) {
+                    headerBadge.textContent = deferredInstallPrompt ? 'Ready to Install' : 'Browser Tab Mode';
+                    headerBadge.className = 'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
+                }
+                if (modalBadge) {
+                    if (deferredInstallPrompt) {
+                        modalBadge.textContent = '1-Tap Install Ready!';
+                        modalBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+                    } else {
+                        modalBadge.textContent = 'Browser Tab Mode (Not Installed Yet)';
+                        modalBadge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30';
+                    }
+                }
+                if (topBtnText) {
+                    topBtnText.textContent = deferredInstallPrompt ? 'Install App' : 'App Setup';
+                }
+                if (nativeBanner) {
+                    if (deferredInstallPrompt) nativeBanner.classList.remove('hidden');
+                    else nativeBanner.classList.add('hidden');
+                }
+            }
+
+            runPwaDiagnostics();
+        }
+
+        function runPwaDiagnostics() {
+            const standalone = isCurrentlyStandalone();
+            const elDisplay = document.getElementById('diagDisplayMode');
+            const elPrompt = document.getElementById('diagInstallPrompt');
+            const elSw = document.getElementById('diagSwStatus');
+
+            if (elDisplay) {
+                if (standalone) {
+                    elDisplay.textContent = 'Standalone App Window';
+                    elDisplay.className = 'font-bold text-emerald-500';
+                } else {
+                    elDisplay.textContent = 'Browser Tab (Not Installed)';
+                    elDisplay.className = 'font-bold text-amber-500';
+                }
+            }
+
+            if (elPrompt) {
+                if (standalone) {
+                    elPrompt.textContent = 'Launched from Home Screen';
+                    elPrompt.className = 'font-bold text-emerald-500';
+                } else if (deferredInstallPrompt) {
+                    elPrompt.textContent = 'Ready (1-Tap WebAPK)';
+                    elPrompt.className = 'font-bold text-emerald-500';
+                } else {
+                    elPrompt.textContent = 'Use Menu (⋮) or Upload sw.js';
+                    elPrompt.className = 'font-bold text-slate-600 dark:text-slate-300';
+                }
+            }
+
+            if (elSw) {
+                elSw.textContent = swRegistrationStatus;
+                elSw.className = swRegistrationStatus.includes('Active')
+                    ? 'font-bold text-emerald-500'
+                    : 'font-bold text-amber-500';
+            }
+        }
+
+        async function setupStandalonePWA() {
             try {
                 generatedIcon192 = generateAppIconPng(192);
                 generatedIcon512 = generateAppIconPng(512);
@@ -1005,68 +1132,70 @@
                 if (apple) apple.href = generatedIcon512;
                 if (modalImg) modalImg.src = generatedIcon512;
 
-                // Update manifest with both 192x192 & 512x512 PNGs + separate 'any' and 'maskable' entries
-                const manifestObj = {
-                    id: './',
-                    name: 'PulseHabit | Daily Habit & Streak Tracker',
-                    short_name: 'PulseHabit',
-                    description: 'Standalone habit tracker with 15-day editable window and streak charts.',
-                    start_url: window.location.href.split('#')[0],
-                    scope: './',
-                    display: 'standalone',
-                    orientation: 'portrait-primary',
-                    background_color: '#0B0F17',
-                    theme_color: '#0B0F17',
-                    icons: [
-                        { src: generatedIcon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
-                        { src: generatedIcon192, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-                        { src: generatedIcon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
-                        { src: generatedIcon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
-                    ]
-                };
-
-                const encodedManifest = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                // Dual-Mode Manifest: Check if physical ./manifest.json exists on the server (e.g., GitHub Pages)
                 const manifestLink = document.getElementById('dynamicManifest');
-                if (manifestLink) manifestLink.href = encodedManifest;
+                let physicalManifestFound = false;
 
-                // Attempt to register sw.js if hosted on HTTPS or localhost (e.g. GitHub Pages)
-                if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-                    navigator.serviceWorker.register('./sw.js').catch(() => {});
+                if (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                    try {
+                        const res = await fetch('./manifest.json', { method: 'HEAD', cache: 'no-cache' });
+                        if (res.ok) {
+                            physicalManifestFound = true;
+                            manifestModeStatus = 'Physical ./manifest.json (WebAPK Ready)';
+                            if (manifestLink) manifestLink.href = './manifest.json';
+                        }
+                    } catch (e) {
+                        physicalManifestFound = false;
+                    }
                 }
-            } catch (e) {}
 
-            // Detect if already running as Standalone installed PWA
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            updateStandaloneStatusUI(isStandalone);
+                // If no physical ./manifest.json is uploaded yet, fall back to embedded PNG data-URI manifest
+                if (!physicalManifestFound && manifestLink) {
+                    const manifestObj = buildManifestObject(true);
+                    manifestLink.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+                    manifestModeStatus = 'Embedded Fallback (Upload manifest.json for WebAPK)';
+                }
+
+                // Dual-Mode Service Worker check: attempt to register ./sw.js
+                if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+                    try {
+                        const reg = await navigator.serviceWorker.register('./sw.js');
+                        if (reg) {
+                            swRegistrationStatus = 'Active (WebAPK Ready)';
+                        }
+                    } catch (swErr) {
+                        swRegistrationStatus = 'Not in folder yet (Download below)';
+                    }
+                } else {
+                    swRegistrationStatus = 'Requires HTTPS / GitHub Pages';
+                }
+            } catch (e) {
+                swRegistrationStatus = 'Fallback Mode';
+            }
+
+            updateInstallButtonsUI();
 
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredInstallPrompt = e;
-                const banner = document.getElementById('nativeInstallBanner');
-                if (banner) banner.classList.remove('hidden');
-                const topText = document.getElementById('topInstallBtnText');
-                if (topText) topText.textContent = 'Install App';
+                updateInstallButtonsUI();
             });
+
+            window.addEventListener('appinstalled', () => {
+                deferredInstallPrompt = null;
+                updateInstallButtonsUI();
+                showToast('PulseHabit installed! Launch it from your Home Screen.', 'check');
+            });
+
+            if (window.matchMedia) {
+                window.matchMedia('(display-mode: standalone)').addEventListener('change', () => {
+                    updateInstallButtonsUI();
+                });
+            }
         }
 
         function downloadGitHubPagesManifest() {
-            const manifestObj = {
-                id: './',
-                name: 'PulseHabit | Daily Habit & Streak Tracker',
-                short_name: 'PulseHabit',
-                description: 'Standalone habit tracker with 15-day editable window and streak charts.',
-                start_url: './index.html',
-                scope: './',
-                display: 'standalone',
-                orientation: 'portrait-primary',
-                background_color: '#0B0F17',
-                theme_color: '#0B0F17',
-                icons: [
-                    { src: generatedIcon192 || generateAppIconPng(192), sizes: '192x192', type: 'image/png', purpose: 'any' },
-                    { src: generatedIcon512 || generateAppIconPng(512), sizes: '512x512', type: 'image/png', purpose: 'any' },
-                    { src: generatedIcon512 || generateAppIconPng(512), sizes: '512x512', type: 'image/png', purpose: 'maskable' }
-                ]
-            };
+            const manifestObj = buildManifestObject(false);
             const blob = new Blob([JSON.stringify(manifestObj, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1074,22 +1203,23 @@
             a.download = 'manifest.json';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Downloaded manifest.json! Place it next to index.html', 'check');
+            showToast('Downloaded manifest.json (with embedded 192px & 512px PNG icons)!', 'check');
         }
 
         function downloadGitHubPagesServiceWorker() {
             const swCode = [
-                "const CACHE_NAME = 'pulsehabit-pwa-v1';",
+                "const CACHE_NAME = 'pulsehabit-pwa-v2';",
                 "const ASSETS = ['./', './index.html', './manifest.json'];",
                 "self.addEventListener('install', (e) => {",
-                "  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)));",
+                "  e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS)).catch(() => {}));",
                 "  self.skipWaiting();",
                 "});",
                 "self.addEventListener('activate', (e) => {",
                 "  e.waitUntil(self.clients.claim());",
                 "});",
                 "self.addEventListener('fetch', (e) => {",
-                "  e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));",
+                "  if (e.request.method !== 'GET') return;",
+                "  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));",
                 "});"
             ].join('\n');
             const blob = new Blob([swCode], { type: 'application/javascript' });
@@ -1099,18 +1229,29 @@
             a.download = 'sw.js';
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Downloaded sw.js! Upload it to your GitHub Pages root', 'check');
+            showToast('Downloaded sw.js! Upload it next to index.html', 'check');
         }
 
-            // Detect if already running as Standalone installed PWA
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-            updateStandaloneStatusUI(isStandalone);
+        function downloadAllPwaFiles() {
+            downloadGitHubPagesManifest();
+            setTimeout(() => {
+                downloadGitHubPagesServiceWorker();
+            }, 350);
+        }
 
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredInstallPrompt = e;
-        const STORAGE_KEY = 'pulsehabit_clean_v1';
-        const LEGACY_KEYS = ['pulsehabit_pwa_v4', 'pulsehabit_pwa_v3', 'pulsehabit_pwa_v2', 'pulsehabit_v1'];
+        async function triggerNativePwaInstall() {
+            if (!deferredInstallPrompt) {
+                showToast('Upload manifest.json & sw.js to GitHub Pages, or use Chrome Menu (⋮) → Install app.', 'lock');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast('Installing PulseHabit WebAPK...', 'check');
+                deferredInstallPrompt = null;
+            }
+            updateInstallButtonsUI();
+        }
 
         function loadState() {
             try {
@@ -1130,19 +1271,7 @@
             }
         }
 
-        async function triggerNativePwaInstall() {
-            if (!deferredInstallPrompt) return;
-            deferredInstallPrompt.prompt();
-            const { outcome } = await deferredInstallPrompt.userChoice;
-            if (outcome === 'accepted') {
-                showToast('PulseHabit installed to your device!', 'check');
-                document.getElementById('nativeInstallBanner').classList.add('hidden');
-            }
-            deferredInstallPrompt = null;
-        }
-
         // Web Audio API Synthesizer for check-ins AND frozen lock buzz
-        let audioCtx = null;
         function playFeedbackSound(type) {
             if (!state.soundEnabled) return;
             try {
@@ -1185,33 +1314,6 @@
                     osc.stop(now + 0.16);
                 }
             } catch (err) {}
-        }
-
-        function loadState() {
-            try {
-                const raw = localStorage.getItem('pulsehabit_pwa_v2');
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed.habits) && parsed.habits.length > 0) {
-                        state.habits = parsed.habits.map(normalizeHabit);
-                        return;
-                    }
-                }
-                // Migrate v1 if present
-                const v1Raw = localStorage.getItem('pulsehabit_v1');
-                if (v1Raw) {
-                    const v1 = JSON.parse(v1Raw);
-                    if (Array.isArray(v1.habits) && v1.habits.length > 0) {
-                        state.habits = v1.habits.map(normalizeHabit);
-                        saveState();
-                        return;
-                    }
-                }
-                state.habits = createSeedHabits();
-                saveState();
-            } catch (e) {
-                state.habits = createSeedHabits();
-            }
         }
 
         function normalizeHabit(h) {
@@ -2269,16 +2371,24 @@
         }
 
         // PWA Modal & Mobile Bottom Nav Switching
-        function openPwaModal() {
-            const m = document.getElementById('pwaModal');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
+        function openInstallModal() {
+            updateInstallButtonsUI();
+            const m = document.getElementById('installModal');
+            if (m) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            }
         }
-        function closePwaModal() {
-            const m = document.getElementById('pwaModal');
-            m.classList.add('hidden');
-            m.classList.remove('flex');
+        function closeInstallModal() {
+            const m = document.getElementById('installModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
         }
+        // Alias for backward compatibility
+        function openPwaModal() { openInstallModal(); }
+        function closePwaModal() { closeInstallModal(); }
 
         function switchMobileTab(tab) {
             state.mobileTab = tab;
@@ -2373,7 +2483,6 @@
             }
         }
 
-        let toastTimer = null;
         function showToast(message, iconType = 'check') {
             const banner = document.getElementById('toastBanner');
             const icon = document.getElementById('toastIcon');
